@@ -89,10 +89,18 @@ ____
 ## s3Presigned*
 
 ```nim
-proc s3Presigned*(creds: AwsCreds, bucketHost, key, contentName, expireInSec: string): string =
+proc s3Presigned*(creds: AwsCreds, bucketHost, key: string, contentName="", setContentType=true, fileExt="", expireInSec="65"): string =
 ```
 
 Generates a S3 presigned url for sharing.
+
+```
+contentName    => sets "response-content-disposition" and "attachment"
+setContentType => sets "response-content-type"
+fileExt        => only if setContentType=true
+                  if `fileExt = ""` then mimetype is automated
+                  needs to be ".jpg" (dot before) like splitFile(f).ext
+```
 
 
 ____

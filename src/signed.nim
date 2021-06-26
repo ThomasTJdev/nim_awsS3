@@ -32,6 +32,8 @@ proc s3SignedUrl*(awsCreds: AwsCreds, bucketHost, key: string, httpMethod=HttpGe
   ##  This is a custom defined header query. The string needs to include the format
   ##  "head1:value,head2:value" - a comma separated string with header and
   ##  value diveded by colon.
+  ## 
+  ## fileExt => ".jpg", ".ifc"
 
   let
     secretKey = awsCreds.AWS_SECRET_ACCESS_KEY

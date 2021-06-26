@@ -56,9 +56,15 @@ proc s3Creds*(accessKey, secretKey, tokenKey, region: string): AwsCreds =
 #
 # S3 presigned GET
 #
-proc s3Presigned*(creds: AwsCreds, bucketHost, key, contentName, expireInSec: string): string =
+proc s3Presigned*(creds: AwsCreds, bucketHost, key: string, contentName="", setContentType=true, fileExt="", expireInSec="65"): string =
   ## Generates a S3 presigned url for sharing.
-  result = s3SignedUrl(creds, bucketHost, key, contentName=contentName, expireInSec=expireInSec)
+  ##
+  ## contentName    => sets "response-content-disposition" and "attachment"
+  ## setContentType => sets "response-content-type"
+  ## fileExt        => only if setContentType=true
+  ##                   if `fileExt = ""` then mimetype is automated
+  ##                   needs to be ".jpg" (dot before) like splitFile(f).ext
+  result = s3SignedUrl(creds, bucketHost, key, contentName=contentName, setContentType=setContentType, fileExt=fileExt, expireInSec=expireInSec)
 
 
 #

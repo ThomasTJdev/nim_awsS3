@@ -1,2 +1,2 @@
-import awss3pkg/api
+import src/api
 export api

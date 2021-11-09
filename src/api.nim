@@ -179,10 +179,7 @@ proc s3GetObjectIs2xx*(creds: AwsCreds, bucketHost, key, downloadPath: string): 
 proc s3PutObject*(client: AsyncHttpClient, creds: AwsCreds, bucketHost, key, localPath: string): Future[AsyncResponse]  {.async.} =
   ## AWS S3 API - PutObject
   ##
-  let mimes = newMimetypes()
-  var data = newMultipartData()
-  data.addFiles({"file": localPath}, mimeDb = mimes)
-  result = await client.put(s3SignedUrl(creds, bucketHost, key, httpMethod=HttpPut), multipart=data)
+  result = await client.put(s3SignedUrl(creds, bucketHost, key, httpMethod=HttpPut), body = readFile(localPath))
 
 
 proc s3PutObjectIs2xx*(creds: AwsCreds, bucketHost, key, localPath: string, deleteLocalFileAfter=true): Future[bool] {.async.} =

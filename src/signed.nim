@@ -65,9 +65,10 @@ proc s3SignedUrl*(awsCreds: AwsCreds, bucketHost, key: string, httpMethod=HttpGe
               "X-Amz-Credential": accessKey & "/" & scope,
               "X-Amz-Date": datetime,
               "X-Amz-Expires": expireSec,
-              "X-Amz-Security-Token": tokenKey,
               # "X-Amz-SignedHeaders": "host"
             }
+  if tokenKey != "":
+    query["X-Amz-Security-Token"] = newJString(tokenKey)
 
   if contentName != "":
     jsonUpdate(query, %*{"response-content-disposition": "attachment; filename=\"" & contentName & "\""})

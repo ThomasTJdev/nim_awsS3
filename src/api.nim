@@ -179,6 +179,7 @@ proc s3GetObjectIs2xx*(creds: AwsCreds, bucketHost, key, downloadPath: string): 
 proc s3PutObject*(client: AsyncHttpClient, creds: AwsCreds, bucketHost, key, localPath: string): Future[AsyncResponse]  {.async.} =
   ## AWS S3 API - PutObject
   ##
+  ## The PutObject reads the file to memory and uploads it.
   result = await client.put(s3SignedUrl(creds, bucketHost, key, httpMethod=HttpPut), body = readFile(localPath))
 
 
@@ -187,6 +188,8 @@ proc s3PutObjectIs2xx*(creds: AwsCreds, bucketHost, key, localPath: string, dele
   ##
   ## This performs a PUT and uploads the file. The `localPath` param needs to
   ## be the full path.
+  ##
+  ## The PutObject reads the file to memory and uploads it.
   if not fileExists(localPath):
     return false
 

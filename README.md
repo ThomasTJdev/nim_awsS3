@@ -211,7 +211,7 @@ proc s3PutObject*(client: AsyncHttpClient, creds: AwsCreds, bucketHost, key, loc
 
 AWS S3 API - PutObject
 
-
+The PutObject reads the file to memory and uploads it.
 
 
 ____
@@ -224,8 +224,9 @@ proc s3PutObjectIs2xx*(creds: AwsCreds, bucketHost, key, localPath: string, dele
 
 AWS S3 API - PutObject bool
 
- This performs a PUT and uploads the file. The `localPath` param needs to be the full path.
+This performs a PUT and uploads the file. The `localPath` param needs to be the full path.
 
+The PutObject reads the file to memory and uploads it.
 
 ____
 

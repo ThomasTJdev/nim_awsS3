@@ -26,7 +26,6 @@ import
   std/asyncdispatch,
   std/httpclient,
   std/httpcore,
-  std/mimetypes,
   std/os,
   std/strutils,
   std/uri

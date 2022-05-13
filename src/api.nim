@@ -35,6 +35,8 @@ import
 
 import
   ./signed
+export
+  signed
 
 
 

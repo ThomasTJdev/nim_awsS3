@@ -15,33 +15,41 @@ import
   awsSTS,
   sigv4
 
+type
+  S3ContentDisposition* = enum
+    CDTinline
+    CDTattachment
+    CDTignore
 
 const
   mimetypeDB = mimes.toTable
 
 
-proc jsonUpdate(a:var JsonNode,b:JsonNode) =
-  for key,value in b.pairs:
-    a[key] = value
-
-
-proc s3SignedUrl*(awsCreds: AwsCreds, bucketHost, key: string, httpMethod=HttpGet, contentName="", setContentType=true, fileExt="", customQuery="", copyObject=""; expireInSec="65"): string =
+proc s3SignedUrl*(
+    credsAccessKey, credsSecretKey, credsRegion: string,
+    bucketHost, key: string,
+    httpMethod = HttpGet,
+    contentDisposition = CDTignore, contentDispositionName = "",
+    setContentType = true,
+    fileExt = "", customQuery = "", copyObject = "", expireInSec = "65",
+    accessToken = ""
+  ): string =
   ## Generate a S3 signed URL.
   ##
   ## customQuery:
   ##  This is a custom defined header query. The string needs to include the format
   ##  "head1:value,head2:value" - a comma separated string with header and
   ##  value diveded by colon.
-  ## 
+  ##
   ## fileExt => ".jpg", ".ifc"
 
   let
-    secretKey = awsCreds.AWS_SECRET_ACCESS_KEY
-    accessKey = awsCreds.AWS_ACCESS_KEY_ID
-    tokenKey  = awsCreds.AWS_SESSION_TOKEN
+    accessKey = credsAccessKey
+    secretKey = credsSecretKey
+    tokenKey  = accessToken
 
     url       = "https://" & bucketHost & "/" & key
-    region    = awsCreds.AWS_REGION
+    region    = credsRegion
     service   = "s3"
 
     payload   = ""
@@ -67,34 +75,80 @@ proc s3SignedUrl*(awsCreds: AwsCreds, bucketHost, key: string, httpMethod=HttpGe
               "X-Amz-Expires": expireSec,
               # "X-Amz-SignedHeaders": "host"
             }
+
   if tokenKey != "":
     query["X-Amz-Security-Token"] = newJString(tokenKey)
 
-  if contentName != "":
-    jsonUpdate(query, %*{"response-content-disposition": "attachment; filename=\"" & contentName & "\""})
+
+  if contentDisposition != CDTignore or contentDispositionName != "":
+    let dispType =
+        case contentDisposition
+        of CDTinline:
+          "inline;"
+        of CDTattachment:
+          "attachment;"
+        else:
+          ""
+
+    let filename =
+        if contentDispositionName == "":
+          ""
+        elif dispType == "":
+          "filename=\"" & contentDispositionName & "\""
+        else:
+          " filename=\"" & contentDispositionName & "\""
+
+    query["response-content-disposition"] = newJString(dispType & filename)
+
 
   if setContentType:
-    let extension = if fileExt != "": fileExt[1..^1] else: splitFile(key).ext[1..^1]
-    jsonUpdate(query, %*{"response-content-type": mimetypeDB.getOrDefault(extension, "binary/octet-stream")})
+    let extension =
+        if fileExt != "":
+          fileExt[1..^1]
+        else:
+          splitFile(key).ext[1..^1]
+
+    query["response-content-type"] = newJString(mimetypeDB.getOrDefault(extension, "binary/octet-stream"))
+
 
   if customQuery != "":
     for c in split(customQuery, ","):
       let q = split(c, ":")
-      jsonUpdate(query, %*{q[0]: q[1]})
+      query[q[0]] = newJString(q[1])
+
 
   # Add the signed headers to query
   if copyObject != "":
-    jsonUpdate(query, %*{"X-Amz-SignedHeaders": "host;x-amz-copy-source"})
+    query["X-Amz-SignedHeaders"] = newJString("host;x-amz-copy-source")
   else:
-    jsonUpdate(query, %*{"X-Amz-SignedHeaders": "host"})
+    query["X-Amz-SignedHeaders"] = newJString("host")
+
 
   let
-    request   = canonicalRequest(httpMethod, url, query, headers, payload, digest=UnsignedPayload)
-    sts       = stringToSign(request.hash(digest), scope, date=datetime, digest=digest)
-    signature = calculateSignature(secret=secretKey, date=datetime, region=region,
-                                  service=service, tosign=sts, digest=digest)
+    request   = canonicalRequest(httpMethod, url, query, headers, payload, digest = UnsignedPayload)
+    sts       = stringToSign(request.hash(digest), scope, date = datetime, digest = digest)
+    signature = calculateSignature(secret=secretKey, date = datetime, region = region,
+                                  service = service, tosign = sts, digest = digest)
 
   result = url & "?" & request.split("\n")[2] & "&X-Amz-Signature=" & signature
 
   when defined(dev):
     echo result
+
+
+proc s3SignedUrl*(awsCreds: AwsCreds, bucketHost, key: string,
+    httpMethod = HttpGet,
+    contentDisposition = CDTignore, contentDispositionName = "",
+    setContentType = true, fileExt = "", customQuery = "", copyObject = "",
+    expireInSec = "65"
+  ): string =
+
+  return s3SignedUrl(
+      awsCreds.AWS_ACCESS_KEY_ID, awsCreds.AWS_SECRET_ACCESS_KEY, awsCreds.AWS_REGION,
+      bucketHost, key,
+      httpMethod = httpMethod,
+      contentDisposition = contentDisposition, contentDispositionName = contentDispositionName,
+      setContentType = setContentType,
+      fileExt = fileExt, customQuery = customQuery, copyObject = copyObject, expireInSec = expireInSec,
+      accessToken = awsCreds.AWS_SESSION_TOKEN
+    )

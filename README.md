@@ -44,30 +44,34 @@ const
   myAccessKey   = "AKIAEXAMPLE"
   mySecretKey   = "J98765RFGBNYT4567EXAMPLE"
   role          = "arn:aws:iam::2345676543:role/Role-S3-yeah"
-  localTestFile = "/home/username/download/myimage.jpg"
+  s3File        = "test/test.jpg"
   s3MoveTo      = "test2/test.jpg"
+  localTestFile = "/home/username/download/myimage.jpg"
   downloadTo    = "/home/username/git/nim_awsS3/test3.jpg"
 
 
 ## Get creds with awsSTS package
 let creds = awsCredentialGet(myAccessKey, mySecretKey, role, serverRegion)
 
-## putObject
-echo waitFor s3PutObjectIs2xx(creds, bucketHost, "test/test.jpg", localTestFile)
+## 1) Create test file
+writeFile(localTestFile, "blabla")
 
-## moveObject (copy and delete)
-waitFor s3MoveObject(creds, bucketHost, s3MoveTo, bucketHost, bucketName, "test/test.jpg")
+## 2) Put object
+echo waitFor s3PutObjectIs2xx(creds, bucketHost, s3File, localTestFile)
 
-## headObject
+## 3) Move object
+waitFor s3MoveObject(creds, bucketHost, s3MoveTo, bucketHost, bucketName, s3File)
+
+## 4) Get content-length
 var client = newAsyncHttpClient()
 let m1 = waitFor s3HeadObject(client, creds, bucketHost, s3MoveTo)
 echo m1.headers["content-length"]
 
-## getObject
+## 5) Get object
 echo waitFor s3GetObjectIs2xx(creds, bucketHost, s3MoveTo, downloadTo)
 echo fileExists(downloadTo)
 
-## deleteObject
+## 6) Delete object
 echo waitFor s3DeleteObjectIs2xx(creds, bucketHost, s3MoveTo)
 ```
 
@@ -81,25 +85,79 @@ echo waitFor s3DeleteObjectIs2xx(creds, bucketHost, s3MoveTo)
 proc s3Creds*(accessKey, secretKey, tokenKey, region: string): AwsCreds =
 ```
 
-Don't like the `awsSTS` package? Fine, just create the creds here.
+This uses the nimble package `awsSTS` to store the credentials.
 
 
 ____
 
 ## s3Presigned*
 
+Generate S3 presigned URL's.
+
+### API
+
+This is the standard public API.
+
 ```nim
-proc s3Presigned*(creds: AwsCreds, bucketHost, key: string, contentName="", setContentType=true, fileExt="", expireInSec="65"): string =
+proc s3Presigned*(accessKey, secretKey, region: string, bucketHost, key: string,
+    httpMethod = HttpGet,
+    contentDisposition = CDTattachment, contentDispositionName = "",
+    setContentType = true, fileExt = "", expireInSec = "65", accessToken = ""
+  ): string =
 ```
 
+```nim
+proc s3Presigned*(creds: AwsCreds, bucketHost, key: string,
+    contentDisposition = CDTattachment, contentDispositionName = "",
+    setContentType = true, fileExt = "", expireInSec = "65"
+  ): string =
+```
+
+### Raw
+
+This exposes the internal API. It has been made public for users to skip the `s3Presigned*`.
+
+```nim
+proc s3SignedUrl*(
+    credsAccessKey, credsSecretKey, credsRegion: string,
+    bucketHost, key: string,
+    httpMethod = HttpGet,
+    contentDisposition = CDTignore, contentDispositionName = "",
+    setContentType = true,
+    fileExt = "", customQuery = "", copyObject = "", expireInSec = "65",
+    accessToken = ""
+  ): string =
+
+  ## customQuery:
+  ##  This is a custom defined header query. The string needs to include the format
+  ##  "head1:value,head2:value" - a comma separated string with header and
+  ##  value diveded by colon.
+  ##
+  ## copyObject:
+  ##   Attach copyObject to headers
+```
+
+### Details
 Generates a S3 presigned url for sharing.
 
 ```
-contentName    => sets "response-content-disposition" and "attachment"
+contentDisposition => sets "Content-Disposition" type (inline/attachment)
+contentDispositionName => sets "Content-Disposition" name
 setContentType => sets "response-content-type"
 fileExt        => only if setContentType=true
                   if `fileExt = ""` then mimetype is automated
                   needs to be ".jpg" (dot before) like splitFile(f).ext
+```
+
+
+### Content-Disposition type
+
+```nim
+type
+  contentDisposition* = enum
+    CDTinline     # Content-Disposition: inline
+    CDTattachment # Content-Disposition: attachment
+    CDTignore
 ```
 
 

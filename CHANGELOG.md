@@ -1,3 +1,10 @@
+# v2.0.1
+
+## Changes
+
+* `try-except` within `moveObjects` on `copyObjects` to prevent error. This is temporary until the `copyObject` proc is fixed according to inline comment.
+
+
 # v2.0.0
 
 ## Breaking changes

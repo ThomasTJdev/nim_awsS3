@@ -26,6 +26,7 @@ import
   std/asyncdispatch,
   std/httpclient,
   std/httpcore,
+  std/logging,
   std/os,
   std/strutils,
   std/uri
@@ -300,12 +301,20 @@ proc s3MoveObjects*(creds: AwsCreds, bucketHost, bucketFromHost, bucketFromName:
   var keysSuccess: seq[string]
 
   for key in keys:
-    if (await s3CopyObject(client, creds, bucketHost, key, "/" & bucketFromName & "/" & key)).isSuccess2xx():
-      keysSuccess.add(key)
+    try:
+      if (await s3CopyObject(client, creds, bucketHost, key, "/" & bucketFromName & "/" & key)).isSuccess2xx():
+        keysSuccess.add(key)
+    except:
+      error("s3MoveObjects(): Failed on copy - " & bucketHost & " - " & key)
+      continue
 
   for key in keysSuccess:
-    if not (await (s3DeleteObject(client, creds, bucketFromHost, key))).isSuccess2xx():
-      echo("s3MoveObject(): Failed on delete - " & bucketFromHost & key)
+    try:
+      if not (await (s3DeleteObject(client, creds, bucketFromHost, key))).isSuccess2xx():
+        warn("s3MoveObject(): Could not delete - " & bucketFromHost & " - " & key)
+    except:
+      error("s3MoveObjects(): Failed on delete - " & bucketFromHost & " - " & key)
+      continue
 
   client.close()
 

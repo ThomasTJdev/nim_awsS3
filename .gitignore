@@ -2,6 +2,8 @@ nimcache/
 nimblecache/
 htmldocs/
 
+
+.DS_store
 tester
 tester.nim
 test3.jpg

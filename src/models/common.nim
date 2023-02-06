@@ -1,3 +1,5 @@
+import 
+  options
 
 # enums
 type
@@ -54,5 +56,17 @@ type
   RequestPayer* = Request
   RequestCharged* = Request
   
+  EncodingType* = enum
+    url = "url"
+  
+  CommonPrefix* = object
+    Prefix: Option[string]
+
+  DisplayAccount = object
+    DisplayName: Option[string]
+    ID: Option[string]
+
+  Owner* = DisplayAccount
+  Initiator* = DisplayAccount
 
 # models

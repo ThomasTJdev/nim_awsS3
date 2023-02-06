@@ -2,50 +2,84 @@ import
     common,
     options
 
+# this file is the tyoe definition for the s3 api taken from the aws docs
+# https://docs.aws.amazon.com/AmazonS3/latest/API/API_CompleteMultipartUpload.html
+
 type
     CompletedPart* = object
 
-        ETag: Option[string]
+        ## Entity tag of the uploaded part
+        ETag*: Option[string]
 
-        ChecksumCRC32: Option[string]
+        ## A base64-encoded, 32-bit CRC32 checksum of the uploaded part.
+        ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
+        ChecksumCRC32*: Option[string]
 
-        ChecksumCRC32C: Option[string]
+        ## A base64-encoded, 32-bit CRC32C checksum of the uploaded part.
+        ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
+        ChecksumCRC32C*: Option[string]
 
-        ChecksumSHA1: Option[string]
+        ## A base64-encoded, 32-bit SHA1 checksum of the uploaded part.
+        ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
+        ChecksumSHA1*: Option[string]
 
-        ChecksumSHA256: Option[string]
+        ## A base64-encoded, 32-bit SHA256 checksum of the uploaded part.
+        ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
+        ChecksumSHA256*: Option[string]
 
-        PartNumber: Option[int]
+        ## The part number of the uploaded part, restricted to 1-10000
+        PartNumber*: Option[int]
 
 
     CompletedMultipartUpload* = object
-    
-        Parts: Option[seq[CompletedPart]]
+        # can result in a 400 error when not provided by the request.
+        Parts*: Option[seq[CompletedPart]]
 
     CompleteMultipartUploadRequest* = object
 
-        Bucket: string
+        ## The bucket name of the uploaded the part.
+        Bucket*: string
         
-        Key: string
+        ## Key of the object to upload. AKA the filepath/filename.
+        Key*: string
 
-        MultipartUpload: Option[CompletedMultipartUpload]
+        ## The ID that identifies the multipart upload.
+        UploadId*: string
 
-        UploadId: string
+        # Multipart upload request body
+        MultipartUpload*: Option[CompletedMultipartUpload]
 
-        ChecksumCRC32: Option[string]
+        ## A base64-encoded, 32-bit CRC32 checksum of the uploaded part.
+        ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
+        ChecksumCRC32*: Option[string]
 
-        ChecksumCRC32C: Option[string]
+        ## A base64-encoded, 32-bit CRC32C checksum of the uploaded part.
+        ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
+        ChecksumCRC32C*: Option[string]
 
-        ChecksumSHA1: Option[string]
+        ## A base64-encoded, 32-bit SHA1 checksum of the uploaded part.
+        ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
+        ChecksumSHA1*: Option[string]
 
-        ChecksumSHA256: Option[string]
+        ## A base64-encoded, 32-bit SHA256 checksum of the uploaded part.
+        ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
+        ChecksumSHA256*: Option[string]
 
-        RequestPayer: Option[RequestPayer | string]
+        ## Tag to specify if the Requester Pays Buckets
+        ## https://docs.aws.amazon.com/AmazonS3/latest/dev/ObjectsinRequesterPaysBuckets.html"
+        RequestPayer*: Option[RequestPayer | string]
 
-        ExpectedBucketOwner: Option[string]
+        ## ID of the expected bucket owner. If the bucket is owned by a different account the request will fail with error code 403.
+        ExpectedBucketOwner*: Option[string]
 
-        SSECustomerAlgorithm: Option[string]
+        # Server-side encryption (SSE) algorithm used to encrypt the upload.
+        # https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html
+        SSECustomerAlgorithm*: Option[string]
 
-        SSECustomerKey: Option[string]
+        # Server-side encryption (SSE) Key used to encrypt the upload.
+        # https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html
+        SSECustomerKey*: Option[string]
 
-        SSECustomerKeyMD5: Option[string]
+        # Server-side encryption (SSE) MD5 checksum.
+        # https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html
+        SSECustomerKeyMD5*: Option[string]

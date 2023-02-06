@@ -5,12 +5,11 @@ import
 
 type
     MultipartUpload* = object
-
         ## ID of the multipart upload
         UploadId*: Option[string]
 
         ## Key of the object to upload. AKA the filepath/filename.
-        Key**: string
+        Key*: string
 
         ## Date and time at which the multipart upload was initiated
         Initiated*: Option[DateTime]

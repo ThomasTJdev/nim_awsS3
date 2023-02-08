@@ -13,135 +13,135 @@ type
         
         ## specified abort date for incomplete multipart uploads
         ## https://docs.aws.amazon.com/AmazonS3/latest/dev/mpuoverview.html#mpu-abort-incomplete-mpu-lifecycle-config
-        AbortDate*: Option[DateTime]
+        abortDate*: Option[DateTime]
 
         ## specified abort rule id for incomplete multipart uploads. "x-amz-abort-date"
-        AbortRuleId*: Option[string]
+        abortRuleId*: Option[string]
 
         ## The bucket name upload the part to.
-        Bucket: string
+        bucket: string
 
         ## Key of the object to upload. AKA the filepath/filename.
-        Key: string
+        key: string
 
         ## The ID that identifies the multipart upload
-        UploadId: string
+        uploadId: string
 
         # Server-side encryption (SSE) algorithm used to encrypt the upload.
         # https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html
-        ServerSideEncryption: Option[string]
+        serverSideEncryption: Option[string]
 
         # Server-side encryption (SSE) Key used to encrypt the upload.
         # https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html
-        SSECustomerKey: Option[string]
+        sseCustomerKey: Option[string]
 
         # Server-side encryption (SSE) MD5 checksum.
         # https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html
-        SSECustomerKeyMD5: Option[string]
+        sseCustomerKeyMD5: Option[string]
 
         ## AWS Key Management Service (AWS KMS)
-        SSEKMSKeyId*: Option[string]
+        sseKMSKeyId*: Option[string]
 
         ## AWS KMS Encryption Context
-        SSEKMSEncryptionContext*: Option[string]
+        sseKMSEncryptionContext*: Option[string]
 
         ## S3 Bucket Key for server-side encryption AWS KMS (SSE-KMS)
-        BucketKeyEnabled*: Option[bool]
+        bucketKeyEnabled*: Option[bool]
 
         #  Requester Pays status for the specified bucket.
-        RequestCharged*: Option[RequestCharged | string]
+        requestCharged*: Option[string]
 
         ## The algorithm used check the integrity of the object during the transfer.
-        ChecksumAlgorithm*: Option[ChecksumAlgorithm | string]
+        checksumAlgorithm*: Option[ChecksumAlgorithm]
 
 
 type 
     CreateMultipartUploadCommandInput* = object
         ## ACL to apply to the object.
-        ACL*: Option[ObjectCannedACL | string]
+        acl*: Option[ObjectCannedACL | string]
 
         ## The bucket name upload the part to.
-        Bucket*: string
+        bucket*: string
 
-        CacheControl*: Option[string]
+        cacheControl*: Option[string]
 
-        ContentDisposition*: Option[string]
+        contentDisposition*: Option[string]
 
-        ContentEncoding*: Option[string]
+        contentEncoding*: Option[string]
 
-        ContentLanguage*: Option[string]
+        contentLanguage*: Option[string]
 
         ## MIME type
-        ContentType*: Option[string]
+        contentType*: Option[string]
 
         # The date that the multipart upload is to expire.
-        Expires*: Option[DateTime]
+        expires*: Option[DateTime]
 
         ## Grant READ, READ_ACP, and WRITE_ACP permissions on the upload.
-        GrantFullControl*: Option[string]
+        grantFullControl*: Option[string]
 
         ## Grant READ permissions on the upload.
-        GrantRead*: Option[string]
+        grantRead*: Option[string]
 
         ## Grant READACP permissions on the upload.
-        GrantReadACP*: Option[string]
+        grantReadACP*: Option[string]
 
         ## Grant WRITEACP permissions on the upload.
-        GrantWriteACP*: Option[string]
+        grantWriteACP*: Option[string]
 
         ## Key of the file to upload. AKA the filepath/filename.
-        Key*: string
+        key*: string
 
         ## A map of metadata to store with the file in S3
-        Metadata*: Option[Table[string, string]]
+        metadata*: Option[Table[string, string]]
 
         # Server-side encryption (SSE) algorithm used to encrypt the upload.
         # https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html
-        ServerSideEncryption*: Option[ServerSideEncryption | string]
+        serverSideEncryption*: Option[ServerSideEncryption]
 
         ## Storage class to be used
         ## https://docs.aws.amazon.com/AmazonS3/latest/dev/storage-class-intro.html   
-        StorageClass*: Option[StorageClass | string]
+        storageClass*: Option[StorageClass | string]
 
         ## Specifies the redirect url if the bucket is being used as a website.
-        WebsiteRedirectLocation*: Option[string]
+        websiteRedirectLocation*: Option[string]
 
         ## The algorithm used to encrypt the upload.
-        SSECustomerAlgorithm*: Option[string]
+        sseCustomerAlgorithm*: Option[string]
 
         ## specifies the customer encryption key. Must match "x-amz-server-side-encryption-customer-algorithm" in headers
-        SSECustomerKey*: Option[string]
+        sseCustomerKey*: Option[string]
 
         ## The MD5 Hash of the customer key to be used for encryption. To verify the integrity of the customer key.
-        SSECustomerKeyMD5*: Option[string]
+        sseCustomerKeyMD5*: Option[string]
 
         ## Specify the SSEKM Key id to be used from AWS:KMS to encrypt the upload.
-        SSEKMSKeyId*: Option[string]
+        sseKMSKeyId*: Option[string]
 
         ## Specify the SSEKM Encryption Context to be used from AWS:KMS to encrypt the upload.
-        SSEKMSEncryptionContext*: Option[string]
+        sseKMSEncryptionContext*: Option[string]
 
         ## Specify to use S3 Bucket Key for server-side encryption AWS KMS (SSE-KMS)
-        BucketKeyEnabled*: Option[bool]
+        bucketKeyEnabled*: Option[bool]
 
         ## Requester Payer for the specified upload.
         ## https://docs.aws.amazon.com/AmazonS3/latest/dev/ObjectsinRequesterPaysBuckets.html
-        RequestPayer*: Option[RequestPayer | string]
+        requestPayer*: Option[string]
 
         ## Tag set of the upload. must be URL encoded.
-        Tagging*: Option[string]
+        tagging*: Option[string]
 
         ## Specifies the object lock mode that you want to apply to the uploaded object.
-        ObjectLockMode*: Option[ObjectLockMode | string]
+        objectLockMode*: Option[ObjectLockMode]
 
         ## Specifies the date and time when you want the object lock to expire.
-        ObjectLockRetainUntilDate*: Option[DateTime]
+        objectLockRetainUntilDate*: Option[DateTime]
 
         ## Specifies whether you want to apply a Legal Hold to the uploaded object.
-        ObjectLockLegalHoldStatus*: Option[ObjectLockLeagalHoldStatus | string]
+        objectLockLegalHoldStatus*: Option[ObjectLockLeagalHoldStatus]
 
         ## ID of the expected bucket owner. If the bucket is owned by a different account the request will fail with error code 403.
         ExpectedBucketOwner*: Option[string]
 
         ## The algorithm used check the integrity of the object during the transfer.
-        ChecksumAlgorithm*: Option[ChecksumAlgorithm | string]
+        ChecksumAlgorithm*: Option[ChecksumAlgorithm]

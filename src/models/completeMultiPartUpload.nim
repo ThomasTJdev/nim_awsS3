@@ -9,68 +9,68 @@ type
     CompletedPart* = object
 
         ## Entity tag of the uploaded part
-        ETag*: Option[string]
+        eTag*: Option[string]
 
         ## A base64-encoded, 32-bit CRC32 checksum of the uploaded part.
         ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
-        ChecksumCRC32*: Option[string]
+        checksumCRC32*: Option[string]
 
         ## A base64-encoded, 32-bit CRC32C checksum of the uploaded part.
         ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
-        ChecksumCRC32C*: Option[string]
+        checksumCRC32C*: Option[string]
 
         ## A base64-encoded, 32-bit SHA1 checksum of the uploaded part.
         ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
-        ChecksumSHA1*: Option[string]
+        checksumSHA1*: Option[string]
 
         ## A base64-encoded, 32-bit SHA256 checksum of the uploaded part.
         ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
-        ChecksumSHA256*: Option[string]
+        checksumSHA256*: Option[string]
 
         ## The part number of the uploaded part, restricted to 1-10000
-        PartNumber*: Option[int]
+        partNumber*: Option[int]
 
 
     CompletedMultipartUpload* = object
         # can result in a 400 error when not provided by the request.
-        Parts*: Option[seq[CompletedPart]]
+        parts*: Option[seq[CompletedPart]]
 
     CompleteMultipartUploadRequest* = object
 
         ## The bucket name of the uploaded the part.
-        Bucket*: string
+        bucket*: string
         
         ## Key of the object to upload. AKA the filepath/filename.
-        Key*: string
+        key*: string
 
         ## The ID that identifies the multipart upload.
-        UploadId*: string
+        uploadId*: string
 
         # Multipart upload request body
-        MultipartUpload*: Option[CompletedMultipartUpload]
+        multipartUpload*: Option[CompletedMultipartUpload]
 
         ## A base64-encoded, 32-bit CRC32 checksum of the uploaded part.
         ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
-        ChecksumCRC32*: Option[string]
+        checksumCRC32*: Option[string]
 
         ## A base64-encoded, 32-bit CRC32C checksum of the uploaded part.
         ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
-        ChecksumCRC32C*: Option[string]
+        checksumCRC32C*: Option[string]
 
         ## A base64-encoded, 32-bit SHA1 checksum of the uploaded part.
         ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
-        ChecksumSHA1*: Option[string]
+        checksumSHA1*: Option[string]
 
         ## A base64-encoded, 32-bit SHA256 checksum of the uploaded part.
         ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
-        ChecksumSHA256*: Option[string]
+        checksumSHA256*: Option[string]
 
         ## Tag to specify if the Requester Pays Buckets
         ## https://docs.aws.amazon.com/AmazonS3/latest/dev/ObjectsinRequesterPaysBuckets.html"
-        RequestPayer*: Option[RequestPayer | string]
+        requestPayer*: Option[RequestPayer | string]
 
         ## ID of the expected bucket owner. If the bucket is owned by a different account the request will fail with error code 403.
-        ExpectedBucketOwner*: Option[string]
+        expectedBucketOwner*: Option[string]
 
         # Server-side encryption (SSE) algorithm used to encrypt the upload.
         # https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html

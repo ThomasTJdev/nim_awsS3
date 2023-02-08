@@ -9,109 +9,108 @@ type
     UploadPartCommandInput* = object
        
         ## Object data
-        Body: Option[openArray[byte] | string]
+        body: Option[openArray[byte] | string]
 
 
         ## The bucket name of the uploaded the part.
-        Bucket*: string
+        bucket*: string
         
         ## Specify the content length if it can not be determined automatically.
-        ContentLength: Option[int]
+        contentLength: Option[int]
  
         ## Base64-encoded 128-bit MD5 digest of the part data. Used to verify the integrity of the
-        ContentMD5: Option[string]
+        contentMD5: Option[string]
  
         ## The algorithm used to verify the integrity of the part data.
         ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
-        ChecksumAlgorithm: Option[ChecksumAlgorithm | string]
+        checksumAlgorithm: Option[ChecksumAlgorithm | string]
 
         ## A base64-encoded, 32-bit CRC32 checksum of the uploaded part.
         ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
-        ChecksumCRC32*: Option[string]
+        checksumCRC32*: Option[string]
 
         ## A base64-encoded, 32-bit CRC32C checksum of the uploaded part.
         ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
-        ChecksumCRC32C*: Option[string]
+        checksumCRC32C*: Option[string]
 
         ## A base64-encoded, 32-bit SHA1 checksum of the uploaded part.
         ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
-        ChecksumSHA1*: Option[string]
+        checksumSHA1*: Option[string]
 
         ## A base64-encoded, 32-bit SHA256 checksum of the uploaded part.
         ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
-        ChecksumSHA256*: Option[string]
+        checksumSHA256*: Option[string]
 
- 
         ## Key of the object to upload. AKA the filepath/filename.
-        Key*: string
+        key*: string
 
         ## The ID that identifies the multipart upload.
-        UploadId*: string
+        eploadId*: string
         
         ## The part number of the part being uploaded. range 1-10000
-        PartNumber: int
+        partNumber: int
         
         # Server-side encryption (SSE) algorithm used to encrypt the upload.
         # https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html
-        SSECustomerAlgorithm*: Option[string]
+        sseCustomerAlgorithm*: Option[string]
 
         # Server-side encryption (SSE) Key used to encrypt the upload.
         # https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html
-        SSECustomerKey*: Option[string]
+        sseCustomerKey*: Option[string]
 
         # Server-side encryption (SSE) MD5 checksum.
         # https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html
-        SSECustomerKeyMD5*: Option[string]
+        sseCustomerKeyMD5*: Option[string]
 
  
         ## Tag to specify if the Requester Pays Buckets
         ## https://docs.aws.amazon.com/AmazonS3/latest/dev/ObjectsinRequesterPaysBuckets.html"
-        RequestPayer*: Option[RequestPayer | string]
+        requestPayer*: Option[string]
 
         ## List the expected bucket owner for this request. If the bucket is owned by a different owner, the server will return an HTTP 403 (Access Denied) error.
         ## x-amz-expected-bucket-owner
-        ExpectedBucketOwner*: Option[string]
+        expectedBucketOwner*: Option[string]
 
 
     UploadPartOutput* = object
         
         ## The server side encryption algorithm used when storing this object in S3 (e.g., AES256, aws:kms).
-        ServerSideEncryption: Option[ServerSideEncryption | string]
+        serverSideEncryption: Option[ServerSideEncryption]
  
         ## <p>Entity tag for the uploaded object.</p>
-        ETag*: Option[string]
+        eTag*: Option[string]
  
         ## A base64-encoded, 32-bit CRC32 checksum of the uploaded part.
         ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
-        ChecksumCRC32*: Option[string]
+        checksumCRC32*: Option[string]
 
         ## A base64-encoded, 32-bit CRC32C checksum of the uploaded part.
         ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
-        ChecksumCRC32C*: Option[string]
+        checksumCRC32C*: Option[string]
 
         ## A base64-encoded, 32-bit SHA1 checksum of the uploaded part.
         ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
-        ChecksumSHA1*: Option[string]
+        checksumSHA1*: Option[string]
 
         ## A base64-encoded, 32-bit SHA256 checksum of the uploaded part.
         ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
-        ChecksumSHA256*: Option[string]
+        checksumSHA256*: Option[string]
  
         # Server-side encryption (SSE) algorithm used to encrypt the upload.
         # https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html
-        SSECustomerAlgorithm*: Option[string]
+        sseCustomerAlgorithm*: Option[string]
 
         # Server-side encryption (SSE) MD5 checksum.
         # https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html
-        SSECustomerKeyMD5*: Option[string]
+        sseCustomerKeyMD5*: Option[string]
 
 
         ## AWS Key Management Service (AWS KMS)
-        SSEKMSKeyId*: Option[string]
+        sseKMSKeyId*: Option[string]
  
         ## S3 Bucket Key for server-side encryption AWS KMS (SSE-KMS)
-        BucketKeyEnabled*: Option[bool]
+        bucketKeyEnabled*: Option[bool]
  
         #  Requester Pays status for the specified bucket.
-        RequestCharged*: Option[RequestCharged | string]
+        requestCharged*: Option[string]
 

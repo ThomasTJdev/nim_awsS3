@@ -6,22 +6,22 @@ import
 type
     MultipartUpload* = object
         ## ID of the multipart upload
-        UploadId*: Option[string]
+        uploadId*: Option[string]
 
         ## Key of the object to upload. AKA the filepath/filename.
-        Key*: string
+        key*: string
 
         ## Date and time at which the multipart upload was initiated
-        Initiated*: Option[DateTime]
+        initiated*: Option[DateTime]
 
         ## The class of storage used to store the object
-        StorageClass*: Option[StorageClass | string]
+        storageClass*: Option[StorageClass]
 
         ## Specifies the owner of the object that is part of the multipart upload.
-        Owner*: Option[Owner]
+        owner*: Option[Owner]
 
         ## Identifies who initiated the multipart upload
-        Initiator*: Option[Initiator]
+        initiator*: Option[Initiator]
 
         ## The algorithm that was used to create a checksum of the object
-        ChecksumAlgorithm*: Option[ChecksumAlgorithm | string]
+        checksumAlgorithm*: Option[ChecksumAlgorithm]

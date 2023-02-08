@@ -37,6 +37,13 @@ type
     hashPayload: string
     authorization: string
 
+type
+  AwsScope = object
+    date: DateTime
+    region: string
+    service: string
+    request: string
+
 const
   basicISO8601_1 = initTimeFormat "yyyyMMdd\'T\'HHmmss\'Z\'"
   # basicISO8601_2 = initTimeFormat "yyyy-MM-dd\'T\'HH:mm:ss'.000'\'Z\'"
@@ -45,6 +52,13 @@ proc sign(digest = sha256, key, message: string): string =
   var
     hmac = $hmac.hmac(digest, key, message)
   result = hmac.toLowerAscii() # hmac.hex.toLowerAscii
+
+
+proc createCanonicalUri(uri: string): string =
+  return uri
+
+proc createCanonicalQueryString(queryString: string): string =
+  return queryString.encodeUrl()
 
 
 proc createCanonicalSignedHeaders(headers: seq[string]): string =
@@ -58,7 +72,7 @@ proc createCanonicalSignedHeaders(headers: seq[string]): string =
   result = headers.map(h => h.toLowerAscii().strip().replace("  ", " ")).sorted().join(";")
 
   when defined(dev):
-    echo "== createCanonicalSignedHeaders =="
+    echo "\n== createCanonicalSignedHeaders =="
     echo result
 
 proc createCanonicalHeaders(headers: HttpHeaders): string =
@@ -77,24 +91,25 @@ proc createCanonicalHeaders(headers: HttpHeaders): string =
     result.add(&"{key}:{value};")
 
   when defined(dev):
-    echo "== createCanonicalHeaders =="
+    echo "\n== createCanonicalHeaders =="
     echo result
-  
-
 
 proc createConicalRequest(headers: HttpHeaders, signedHeaders: seq[string], action: HttpMethod, url, payload: string): CanonicalRequestResult = 
   var
     uri                  = url.parseUri()                                   # example: "https://ec2.amazonaws.com/?Action=ListUsers&Version=2010-05-08"
     # TODO: Convert to other hash libraries
     hashPayload          = payload.computeSHA256().hex().toLowerAscii()     # example 
-    canonicalUri         = uri.path                                         # example: "/"
-    canonicalQueryString = uri.query                                        # example: "Action=ListUsers&Version=2010-05-08"
-    canonicalHeaders     = headers.createCanonicalHeaders()                 # exmaple content-type:application/x-www-form-urlencoded; charset=utf-8 host:ec2.amazonaws.com x-amz-date:20220830T123600Z
+  
+  headers.add("x-amz-content-sha256", hashPayload)
+  var
+    canonicalUri                  = uri.path.createCanonicalUri()                    # example: "/"
+    canonicalQueryString          = uri.query.createCanonicalQueryString()           # example: "Action=ListUsers&Version=2010-05-08"
+    canonicalHeaders              = headers.createCanonicalHeaders()                 # exmaple content-type:application/x-www-form-urlencoded; charset=utf-8 host:ec2.amazonaws.com x-amz-date:20220830T123600Z
     canonicalSignedheaders        = signedHeaders.createCanonicalSignedHeaders()     # example "host;x-amz-content-sha256;x-amz-date"
   
-  for signedHeaderKey in signedHeaders:
-    if not headers.hasKey(signedHeaderKey):
-      raise newException(ValueError, &"signedHeaders must exist in headers: {header}")
+  # for signedHeaderKey in signedHeaders:
+  #   if not headers.hasKey(signedHeaderKey):
+  #     raise newException(ValueError, &"signedHeaders must exist in headers: {signedHeaderKey}")
   
   var canonicalRequest = &"{action}\n{canonicalUri}\n{canonicalQueryString}\n{canonicalHeaders}\n\n{signedHeaders}\n{hashPayload}"
 
@@ -104,11 +119,11 @@ proc createConicalRequest(headers: HttpHeaders, signedHeaders: seq[string], acti
 
 
 
-proc createSigningKey(secretKey: string, date: DateTime, region, service: string): string =
+proc createSigningKey(secretKey: string, scope: AwsScope): string =
   var
-    kDate    = sign(sha256, &"AWS4{secretKey}", date.format("yyyyMMdd"))
-    kRegion  = sign(sha256, kDate, region)
-    kService = sign(sha256, kRegion, service)
+    kDate    = sign(sha256, &"AWS4{secretKey}", scope.date.format("yyyyMMdd"))
+    kRegion  = sign(sha256, kDate, scope.region)
+    kService = sign(sha256, kRegion, scope.service)
     kSigning = sign(sha256, kService, "aws4_request")
   result = kSigning
 
@@ -118,8 +133,8 @@ proc createSignedRequest(
     headers: HttpHeaders, 
     signedHeaders: seq[string], # must exist in headers
     action: HttpMethod, 
-    url, payload, accessKey, secretKey, region, service: string, 
-    rawtime: DateTime
+    url, payload, accessKey, secretKey: string,
+    scope: AwsScope
   ): SignedRequestResult = 
   # https://docs.aws.amazon.com/general/latest/gr/create-signed-request.html
   # Step 1: Create a canonical request
@@ -128,7 +143,9 @@ proc createSignedRequest(
   # Step 4: Calculate the signature
   # Step 5: Add the signature to the request
   var
-    date = rawTime.format("yyyyMMdd")
+    date = scope.date.format("yyyyMMdd")
+    region = scope.region
+    service = scope.service
     # 1. Create a canonical request
     canonicalRequest     = createConicalRequest(headers=headers, signedHeaders, action=HttpGet, url=url, payload=payload)
     # 2. Create a hash of the canonical request
@@ -136,7 +153,7 @@ proc createSignedRequest(
     hashPayload          = canonicalRequest.hashPayload          # example: "UNSIGNED-PAYLOAD" | "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     canonicalRequestHash = canonicalRequest.canonicalRequestHash # example "f536975d06c0309214f805bb90ccff089219ecd68b2577efef23edd43b7e1a59"
     # 3. Create a string to sign
-    key                  = createSigningKey(secretKey, rawTime, region, service)
+    key                  = createSigningKey(secretKey, scope)
     # 4. Calculate the signature
     credential           = &"{accessKey}/{date}/{region}/{service}/aws4_request"
     # signedRequest: https://docs.aws.amazon.com/general/latest/gr/create-signed-request.html#create-string-to-sign
@@ -148,10 +165,13 @@ proc createSignedRequest(
   result.hashPayload = hashPayload
   result.authorization = authorization
   when(defined(dev)):
-    echo "== createSignedRequest =="
+    echo "\n== createSignedRequest =="
     echo "key: ", key
-    echo "canonicalRequest: ", canonicalRequest
-    echo "signedRequest: ", signedRequest
+    echo "\n"
+    echo "canonicalRequest: \n", canonicalRequest
+    echo "\n"
+    echo "signedRequest: \n", signedRequest
+    echo "\n"
     echo "signature: ", signature
 
 
@@ -161,8 +181,9 @@ proc main() {.async.} =
   let  
     region     = "eu-west-2"
     # role     = "arn:aws:iam::779135355686:role/nim-multipart-dev-role"
-    accessKey  = "AKIA3K2AWBMTEACKVY7O"
-    secretKey  = "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"
+
+    accessKey     = "AKIA3K2AWBMTIA5B2ZCV"
+    secretKey = "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"
     # bucketName = "nim-aws-s3-multipart-upload"
     # bucketHost = "localhost:3000"
     host = "nim-aws-s3-multipart-upload.s3.eu-west-2.amazonaws.com"
@@ -174,10 +195,10 @@ proc main() {.async.} =
     service    = "s3"
     digest     = SigningAlgo.SHA256 # AWS4-HMAC-SHA256
     rawTime    = getTime().utc()
-    date       = rawTime.format(basicISO8601_1)
+    scope      = AwsScope(date: rawTime, region: region, service: service)
     # version    = "2010-05-08"
-    # url        = "https://localhost:3000/testFile.data"
-    url        = "https://nim-aws-s3-multipart-upload.s3.eu-west-2.amazonaws.com/"
+    # url        = "https://localhost:3000/testFile.bin"
+    url        = "https://nim-aws-s3-multipart-upload.s3.eu-west-2.amazonaws.com/testFile.bin"
     payload    = ""
     httpMethod = HttpGet
 
@@ -185,7 +206,7 @@ proc main() {.async.} =
   var headers = newHttpHeaders(@[
     ("host", host),
     ("user-agent", "aws-sdk-nim/0.1 (nim 1.6; darwin; arm64)"),
-    ("x-amz-date", date)
+    ("x-amz-date", scope.date.format(basicISO8601_1))
   ])
 
   var signedRequest = createSignedRequest(
@@ -197,9 +218,7 @@ proc main() {.async.} =
     payload=payload, 
     accessKey=accessKey,
     secretKey=secretKey, 
-    region=region, 
-    service=service, 
-    rawtime=rawTime
+    scope
   )
 
   # temporary security credentials 

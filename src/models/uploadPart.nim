@@ -72,7 +72,7 @@ type
         expectedBucketOwner*: Option[string]
 
 
-    UploadPartOutput* = object
+    UploadPartResult* = object
         
         ## The server side encryption algorithm used when storing this object in S3 (e.g., AES256, aws:kms).
         serverSideEncryption: Option[ServerSideEncryption]

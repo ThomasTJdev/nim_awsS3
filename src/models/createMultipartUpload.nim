@@ -9,7 +9,7 @@ import
 # https://docs.aws.amazon.com/AmazonS3/latest/API/API_CreateMultipartUpload.html
 
 type
-    CreateMultipartUploadOutput* = object
+    CreateMultipartUploadResult* = object
         
         ## specified abort date for incomplete multipart uploads
         ## https://docs.aws.amazon.com/AmazonS3/latest/dev/mpuoverview.html#mpu-abort-incomplete-mpu-lifecycle-config
@@ -141,7 +141,7 @@ type
         objectLockLegalHoldStatus*: Option[ObjectLockLeagalHoldStatus]
 
         ## ID of the expected bucket owner. If the bucket is owned by a different account the request will fail with error code 403.
-        ExpectedBucketOwner*: Option[string]
+        expectedBucketOwner*: Option[string]
 
         ## The algorithm used check the integrity of the object during the transfer.
-        ChecksumAlgorithm*: Option[ChecksumAlgorithm]
+        checksumAlgorithm*: Option[ChecksumAlgorithm]

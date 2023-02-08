@@ -42,7 +42,7 @@ type
     expectedBucketOwner*: Option[string]
 
 
-  ListMultipartUploadsOutput* = object
+  ListMultipartUploadsResult* = object
     ## The bucket name of the uploaded the part.
     ## bucket
     bucket*: string

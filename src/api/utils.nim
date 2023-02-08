@@ -10,13 +10,13 @@ import ../models/models
 
 
 proc toKebab(s: string): string =
-    # myapi  -> myapi
-    # myApi  -> my-api
-    # MyApi  -> my-api
-    # MyAPI  -> my-api
-    # my_var -> my-var
-    # my_Api -> my-api
-    # my_API -> my-api
+    ## myapi  -> myapi
+    ## myApi  -> my-api
+    ## MyApi  -> my-api
+    ## MyAPI  -> my-api
+    ## my_api -> my-api
+    ## my_Api -> my-api
+    ## my_API -> my-api
     result = s
     var insertDash = true
     var i = 0
@@ -37,12 +37,19 @@ proc toKebab(s: string): string =
                 insertDash = false
                 i.inc()
         i.inc()
-        
+
+   
+    
+type
+    LetterCase = enum
+        None = "None",
+        PascalCase = "PascalCase",
+        CamelCase = "camelCase",
+        SnakeCase = "snake_case",
+        KebabCase = "kebab-case"
 
 
-
-
-proc amzUrlEncodeObject[T](obj: T): string =   
+proc amzUrlEncodeObject[T](obj: T, letterCase: LetterCase = PascalCase): string =   
     #  Encodes an object into a url encoded string.
     #  ListMultipartUploadsRequest
     #    bucket: "mybucket"
@@ -61,17 +68,22 @@ proc amzUrlEncodeObject[T](obj: T): string =
     # convert pascal myVar to my-var
     # 
     for key, val in obj.fieldPairs():
+        var amzKey = case letterCase:
+            # of PascalCase: key.toPascal()
+            # of CamelCase: key.toCamel()
+            # of SnakeCase: key.toSnake()
+            of KebabCase: key.toKebab()
+            else: key
+
         when val is Option:
             if val.isSome():
-                keyVals.add((key.toKebab(), $(val.get())))
+                keyVals.add((amzKey, $(val.get())))
         else:
-            keyVals.add((key.toKebab(), $val))
+            keyVals.add((amzKey, $val))
     
     keyVals.sort()
 
     return encodeQuery(keyVals)
-
-
 
 
 suite "utility functions":
@@ -81,11 +93,12 @@ suite "utility functions":
             "myApi".toKebab() == "my-api"
             "MyApi".toKebab() == "my-api"
             "MyAPI".toKebab() == "my-api"
-            "my_var".toKebab() == "my-var"
+            "my_api".toKebab() == "my-api"
             "my_Api".toKebab() == "my-api"
             "my_API".toKebab() == "my-api"
-            
-    test "encodeUrl":
+
+
+    test "encodeUrl-kebab":
         let listMultipartUploadsRequest = ListMultipartUploadsRequest(
             bucket: "mybucket",
             delimiter: some("/"),
@@ -96,6 +109,5 @@ suite "utility functions":
             uploadIdMarker: some("myuploadid"),
             expectedBucketOwner: some("mybucketowner"),
         )
-        let expected = "bucket=mybucket&delimiter=%2F&encoding-type=url&expected-bucket-owner=mybucketowner&key-marker=mykey&max-uploads=1000&prefix=myprefix&upload-id-marker=myuploadid"
-        check listMultipartUploadsRequest.amzUrlEncodeObject() == expected
-
+        let expectedKebab = "bucket=mybucket&delimiter=%2F&encoding-type=url&expected-bucket-owner=mybucketowner&key-marker=mykey&max-uploads=1000&prefix=myprefix&upload-id-marker=myuploadid"
+        check listMultipartUploadsRequest.amzUrlEncodeObject(KebabCase) == expectedKebab

@@ -112,25 +112,25 @@ type
         abortRuleId*: Option[string]
 
         ## The bucket name upload the part to.
-        bucket: string
+        bucket*: string
 
         ## Key of the object to upload. AKA the filepath/filename.
-        key: string
+        key*: string
 
         ## The ID that identifies the multipart upload
-        uploadId: string
+        uploadId*: string
 
         # Server-side encryption (SSE) algorithm used to encrypt the upload.
         # https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html
-        serverSideEncryption: Option[string]
+        serverSideEncryption*: Option[string]
 
         # Server-side encryption (SSE) Key used to encrypt the upload.
         # https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html
-        sseCustomerKey: Option[string]
+        sseCustomerKey*: Option[string]
 
         # Server-side encryption (SSE) MD5 checksum.
         # https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html
-        sseCustomerKeyMD5: Option[string]
+        sseCustomerKeyMD5*: Option[string]
 
         ## AWS Key Management Service (AWS KMS)
         sseKMSKeyId*: Option[string]

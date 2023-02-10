@@ -1,32 +1,40 @@
+# std
 import 
     os,
     httpclient,
     asyncdispatch,
     strutils,
     strformat,
-    options
+    options,
+    xmlparser,
+    xmltree
 
+# other
+import
+    ../models/models,
+    ../signedv2,
+    xml2Json,
+    json,
+    jsony,
+    dotenv,
+    utils
 
 import
-    
-    ../models/models,
-    ../signedV2,
-    nimSHA2,
-    dotenv
-
-
-
+    createMultipartUpload
 
 
 proc uploadPart*[T](
       client: AsyncHttpClient,
       credentials: AwsCredentials,
+      headers: HttpHeaders = newHttpHeaders(),
       bucket: string,
       region: string,
       service="s3",
       args: UploadPartCommandInput[T]
     ): Future[UploadPartResult] {.async.} =
-
+    ## https://docs.aws.amazon.com/AmazonS3/latest/API/API_UploadPart.html
+    ## Uploads a part in a multipart upload.
+   
     # example request
     # PUT /Key+?partNumber=PartNumber&uploadId=UploadId HTTP/1.1
     # Host: Bucket.s3.amazonaws.com
@@ -63,17 +71,55 @@ proc uploadPart*[T](
     
     let url = &"htts://{bucket}.{service}.{region}.amazonaws.com/{args.key}?partNumber={args.partNumber}&uploadId={args.uploadId}"
     let httpMethod = HttpPut
+    
+    echo "Shit", httpMethod
+    if args.contentLength.isSome():
+      headers["Content-Length"] = $args.contentLength.get()
+    if args.contentMD5.isSome():
+      headers["Content-MD5"] = args.contentMD5.get()
+    if args.checksumAlgorithm.isSome():
+      headers["x-amz-sdk-checksum-algorithm"] = $args.checksumAlgorithm.get()
+    if args.checksumCRC32.isSome():
+      headers["x-amz-checksum-crc32"] = args.checksumCRC32.get()
+    if args.checksumCRC32C.isSome():
+      headers["x-amz-checksum-crc32c"] = args.checksumCRC32C.get()
+    if args.checksumSHA1.isSome():
+      headers["x-amz-checksum-sha1"] = args.checksumSHA1.get()
+    if args.checksumSHA256.isSome():
+      headers["x-amz-checksum-sha256"] = args.checksumSHA256.get()
+    if args.sseCustomerAlgorithm.isSome():
+      headers["x-amz-server-side-encryption-customer-algorithm"] = args.sseCustomerAlgorithm.get()
+    if args.sseCustomerKey.isSome():
+      headers["x-amz-server-side-encryption-customer-key"] = args.sseCustomerKey.get()
+    if args.sseCustomerKeyMD5.isSome():
+      headers["x-amz-server-side-encryption-customer-key-MD5"] = args.sseCustomerKeyMD5.get()
+    if args.requestPayer.isSome():
+      headers["x-amz-request-payer"] = args.requestPayer.get()
+    if args.expectedBucketOwner.isSome():
+      headers["x-amz-expected-bucket-owner"] = args.expectedBucketOwner.get()
 
-    let res = await client.request(credentials, httpMethod, url, region, service, payload=args.body)
+    let res = await client.request(credentials=credentials, headers=headers, httpMethod=httpMethod, url=url, region=region, service=service, payload=args.body)
     let body = await res.body
     if res.code != Http200:
         raise newException(HttpRequestError, "Error: failed to uploadPart: " & $res.code & "\n" & body)
 
-    echo "<code: " & $res.code
-    echo "<body: " & body
-    echo "<headers: " & $res.headers
+    if res.code != Http200:
+        raise newException(HttpRequestError, "Error: " & $res.code & " " & await res.body)
 
-    # result = body.parseXml[ListMultipartUploadsResult]()
+    let xml = body.parseXML()
+    let json = xml.xml2Json()
+    let jsonStr = json.toJson()
+    echo jsonStr
+    let obj = jsonStr.fromJson(UploadPartResult)
+
+    when defined(dev):
+        echo "\n> xml: ", xml
+        echo "\n> jsonStr: ", jsonStr
+        # echo obj
+        # echo "\n> obj string: ", obj.toJson().parseJson().pretty()
+    result = obj
+    
+
 
 proc main() {.async.} =
     # load .env environment variables
@@ -98,14 +144,18 @@ proc main() {.async.} =
 
     var body = fileBuffer[0..<(1024*1024*5)]
 
-    let uploadId = "bhsROEtEo6f7QrI3MtxvKmdg_RIZSzu3Sljj0WvmKWMqOIVul3SUPo0GPsuN0vQB9nBh.N19aENUmvnnQeneg3Wnnq21mU28qkuGAQM01KwBSoqSvrd9NvuDvCv_y6BD"
+    let args = CreateMultipartUploadCommandInput(
+        bucket: bucket,
+        key: key,
+    )
+    let createMultiPartUploadResult = await client.createMultipartUpload(credentials=credentials, bucket=bucket, region=region, args=args)
 
     let uploadPartCommandInput = UploadPartCommandInput[typeof(body)](
         bucket: bucket,
         key: key,
         body: body,
         partNumber: 1,
-        uploadId: uploadId
+        uploadId: createMultiPartUploadResult.uploadId
     )
     let res = await client.uploadPart(credentials=credentials, bucket=bucket, region=region, args=uploadPartCommandInput)
 

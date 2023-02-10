@@ -21,14 +21,14 @@ type
         bucket*: string
         
         ## Specify the content length if it can not be determined automatically.
-        contentLength: Option[int]
+        contentLength*: Option[int]
  
         ## Base64-encoded 128-bit MD5 digest of the part data. Used to verify the integrity of the
-        contentMD5: Option[string]
+        contentMD5*: Option[string]
  
         ## The algorithm used to verify the integrity of the part data.
         ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
-        checksumAlgorithm: Option[ChecksumAlgorithm]
+        checksumAlgorithm*: Option[ChecksumAlgorithm]
 
         ## A base64-encoded, 32-bit CRC32 checksum of the uploaded part.
         ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html

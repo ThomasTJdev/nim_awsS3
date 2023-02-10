@@ -48,7 +48,7 @@ type
     bucket*: string
 
     ## If you specify a delimiter in your request, then the response includes a CommonPrefixes.
-    eommonPrefixes*: Option[seq[CommonPrefix]]
+    commonPrefixes*: Option[seq[CommonPrefix]]
 
     ## The character specified to use to group the keys.
     ## delimiter

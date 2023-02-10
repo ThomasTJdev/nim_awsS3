@@ -25,6 +25,15 @@ proc parseHook*(s: string, i: var int, v: var DateTime) =
             continue
     raise newException(ValueError, "Invalid date format: " & str)
     
+
+proc dumpHook*(s: var string, v: Option[DateTime]) =
+    s.add("\"" & v.get().format("yyyy-mm-dd'T'hh:mm:ss'.'fff'Z'") & "\"" )
+
+proc dumpHook*(s: var string, v: DateTime) =
+    s.add("\"" & v.format("yyyy-mm-dd'T'hh:mm:ss'.'fff'Z'") & "\"" )
+
+
+
 proc parseHook*(s: string, i: var int, v: var int) =
     ## attempt to parse Ints
     var str: string
@@ -45,27 +54,27 @@ proc parseHook*(s: string, i: var int, v: var Option[bool]) =
 
     
 proc renameHook*(v: object, fieldName: var string) =
-  runnableExamples:
-    type
-        MyTest = object
+    runnableExamples:
+        type
+            MyTest = object
                 id: string
                 myFancyField: string
 
-    var myJson = """
-    {
-        "Id": "someId",
-        "MyFancyField": "foo"
-    }
-    """
-    let myTest = myJson.fromJson(MyTest)
-    echo myTest
+        var myJson = """
+        {
+            "Id": "someId",
+            "MyFancyField": "foo"
+        }
+        """
+        let myTest =  myJson.fromJson(MyTest)
+        echo myTest
 
     var tempFieldName = fieldName
     tempFieldName[0] = tempFieldName[0].toLowerAscii()
     for x , _  in v.fieldPairs():
         if tempFieldName == x:
             fieldName = tempFieldName
-        return
+            return
 
 
 proc toKebab(s: string): string =

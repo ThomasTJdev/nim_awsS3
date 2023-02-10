@@ -45,8 +45,6 @@ proc xml2Json*(xmlNode: XmlNode, splitAttr: bool=false): JsonNode =
     ## Convert an XML node to a JSON node.
     ## if <Element><Element> the resulting json will be JSNull
     ## if <Element>1000</Element> the resulting json will be JSString not JSInt
-    if xmlNode.tag == "UploadIdMarker":
-        echo "here"
 
     case xmlNode.kind():
     of xnVerbatimText, xnText:

@@ -13,6 +13,7 @@ import
     ../models/models,
     ../signedv2,
     xml2Json,
+    json,
     jsony,
     dotenv,
     utils
@@ -168,11 +169,11 @@ proc listMultipartUploads*(
     let body = await res.body
 
     when defined(dev):
-        echo "<url: ", url
-        echo "<method: ", httpMethod
-        echo "<code: ", res.code
-        echo "<headers: ", res.headers
-        echo "<body: ", body
+        echo "\n<url: ", url
+        echo "\n<method: ", httpMethod
+        echo "\n<code: ", res.code
+        echo "\n<headers: ", res.headers
+        echo "\n<body: ", body
 
     if res.code != Http200:
         raise newException(HttpRequestError, "Error: " & $res.code & " " & await res.body)
@@ -184,10 +185,10 @@ proc listMultipartUploads*(
     let obj = jsonStr.fromJson(ListMultipartUploadsResult)
 
     when defined(dev):
-        echo ">xml: ", xml
-        echo ">jsonStr: ", jsonStr
-        echo ">obj: ", obj
-
+        echo "\n>xml: ", xml
+        echo "\n>jsonStr: ", jsonStr
+        # echo obj
+        echo "\n>obj string: ", obj.toJson().parseJson().pretty()
     result = obj
     
 

@@ -143,7 +143,6 @@ proc completeMultipartUpload*(
     let xml = body.parseXML()
     let json = xml.xml2Json()
     let jsonStr = json.toJson()
-    echo jsonStr
     let obj = jsonStr.fromJson(CompleteMultipartUploadResult)
 
     when defined(dev):

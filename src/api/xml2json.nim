@@ -41,10 +41,42 @@ import
 #       fAttr: XmlAttributes
 #     fClientData: int    ## for other clients
 
+
+const escapedChars = @[
+    ('<', "&lt;"),
+    ('>', "&gt;"),
+    ('&', "&amp;"),
+    ('"', "&quot;"),
+    ('\'', "&apos;")
+]
+const escapedCharStrings = escapedChars.mapIt($it[0])
+
+proc hasEscapedChar(xmlNode: XmlNode): bool =
+    let children = xmlNode.items().toSeq()
+    for child in children:
+        if child.kind() == xnText:
+            if child.text() in escapedCharStrings:
+                return true
+
+proc getUnescaptedChar(str: string): string =
+    for (c, cs) in escapedChars:
+        if str == cs:
+            return cs
+
+proc getUnescapedString(xmlNode: XmlNode): string =
+    let children = xmlNode.items().toSeq()
+    for child in children:
+        if child.kind() == xnText:
+            if child.text() in escapedCharStrings:
+                result.add child.text().getUnescaptedChar()
+            else:
+                result.add child.text()
+
 proc xml2Json*(xmlNode: XmlNode, splitAttr: bool=false): JsonNode =
     ## Convert an XML node to a JSON node.
     ## if <Element><Element> the resulting json will be JSNull
     ## if <Element>1000</Element> the resulting json will be JSString not JSInt
+
 
     case xmlNode.kind():
     of xnVerbatimText, xnText:
@@ -53,6 +85,9 @@ proc xml2Json*(xmlNode: XmlNode, splitAttr: bool=false): JsonNode =
         let children = xmlNode.items().toSeq()
         if children.len == 0:
             return newJNull()
+        if xmlNode.hasEscapedChar():
+            return newJString(xmlNode.getUnescapedString())
+
         result = newJObject()
         # if element has attributes
         if xmlNode.attrsLen() > 0:
@@ -174,3 +209,10 @@ suite "xml2Json":
     #     let json = expectedJson.parseJson()
     #     echo json.pretty()
     #     echo json.json2xml()
+
+    test "xml quotes":
+        let xmlString = """ <?xml version="1.0" encoding="UTF-8"?>
+
+<CompleteMultipartUploadResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Location>http://nim-aws-s3-multipart-upload.s3.eu-west-2.amazonaws.com/testFile.bin</Location><Bucket>nim-aws-s3-multipart-upload</Bucket><Key>testFile.bin</Key><ETag>&quot;48ad599540f59071982d4a00c6c5928d-4&quot;</ETag></CompleteMultipartUploadResult>"""
+        echo xmlString.parseXml()
+        echo xmlString.parseXml().xml2Json()

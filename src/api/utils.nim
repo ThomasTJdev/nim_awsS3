@@ -4,9 +4,68 @@ import
     strutils,
     uri,
     options,
-    algorithm
+    algorithm,
+    times
 
-import ../models/models
+import 
+    ../models/models,
+    jsony
+
+proc parseHook*(s: string, i: var int, v: var DateTime) =
+    ## jsony time convert
+    ## runs through times and tries to parse them
+    var str: string
+    parseHook(s, i, str)
+    var timeFormats = @["yyyy-MM-dd", "yyyy-MM-dd hh:mm:ss", "yyyy-mm-dd'T'hh:mm:ss'.'fff'Z'"]
+    for fmt in timeFormats:
+        try:
+            v = parse(str, fmt)
+            return
+        except:
+            continue
+    raise newException(ValueError, "Invalid date format: " & str)
+    
+proc parseHook*(s: string, i: var int, v: var int) =
+    ## attempt to parse Ints
+    var str: string
+    parseHook(s, i, str)
+    v = parseInt(str)
+
+proc parseHook*(s: string, i: var int, v: var float) =
+    ## attempt to parse Floats
+    var str: string
+    parseHook(s, i, str)
+    v = parseFloat(str)
+
+proc parseHook*(s: string, i: var int, v: var Option[bool]) =
+    # attempt to parse Bools
+    var str: string
+    parseHook(s, i, str)
+    v = some(parseBool(str))
+
+    
+proc renameHook*(v: object, fieldName: var string) =
+  runnableExamples:
+    type
+        MyTest = object
+                id: string
+                myFancyField: string
+
+    var myJson = """
+    {
+        "Id": "someId",
+        "MyFancyField": "foo"
+    }
+    """
+    let myTest = myJson.fromJson(MyTest)
+    echo myTest
+
+    var tempFieldName = fieldName
+    tempFieldName[0] = tempFieldName[0].toLowerAscii()
+    for x , _  in v.fieldPairs():
+        if tempFieldName == x:
+            fieldName = tempFieldName
+        return
 
 
 proc toKebab(s: string): string =
@@ -111,3 +170,24 @@ suite "utility functions":
         )
         let expectedKebab = "bucket=mybucket&delimiter=%2F&encoding-type=url&expected-bucket-owner=mybucketowner&key-marker=mykey&max-uploads=1000&prefix=myprefix&upload-id-marker=myuploadid"
         check listMultipartUploadsRequest.amzUrlEncodeObject(KebabCase) == expectedKebab
+
+    test "jsony loose frist char":
+        type
+            MyObject = object
+                id: string
+                myFancyField: string
+
+        var myJson = """
+        {
+            "Id": "someId",
+            "MyFancyField": "foo"
+        }
+        """
+        let myObject =  myJson.fromJson(MyObject)
+        let expectedObject = MyObject(id: "someId", myFancyField: "foo")
+        check:
+            myObject == expectedObject
+
+    test "parse time":
+
+        let expectedTime = parse("2023-02-09T08:24:35.000Z", initTimeFormat "yyyy-MM-dd\'T\'HH:mm:ss\'.\'fff\'Z\'")

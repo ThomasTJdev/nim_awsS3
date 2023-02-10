@@ -4,14 +4,23 @@ import
     asyncdispatch,
     strutils,
     strformat,
-    options
+    options,
+    xmlparser,
+    xmltree
 
 
 import
     ../models/models,
     ../signedv2,
-    dotenv
+    xml2Json,
+    jsony,
+    dotenv,
+    utils
 
+type Node = ref object
+
+proc renameHook*(v: var Node, fieldName: var string) =
+    echo fieldName
 
 proc listMultipartUploads*(
         client: AsyncHttpClient,
@@ -156,7 +165,6 @@ proc listMultipartUploads*(
     let httpMethod = HttpGet
 
     let res = await client.request(credentials, httpMethod, url, region, service, payload="")
-
     let body = await res.body
 
     when defined(dev):
@@ -169,8 +177,19 @@ proc listMultipartUploads*(
     if res.code != Http200:
         raise newException(HttpRequestError, "Error: " & $res.code & " " & await res.body)
 
+    let xml = body.parseXML()
+    let json = xml.xml2Json()
+    let jsonStr = json.toJson()
+    echo jsonStr
+    let obj = jsonStr.fromJson(ListMultipartUploadsResult)
+
+    when defined(dev):
+        echo ">xml: ", xml
+        echo ">jsonStr: ", jsonStr
+        echo ">obj: ", obj
+
+    result = obj
     
-    # result = body.parseXml[ListMultipartUploadsResult]()
 
 
 
@@ -191,7 +210,8 @@ proc main() {.async.} =
     let args = ListMultipartUploadsRequest(
         bucket: bucket,
     )
-    let res = await client.listMultipartUploads(credentials=credentials, bucket=bucket, region=region, args=args)
+    let result = await client.listMultipartUploads(credentials=credentials, bucket=bucket, region=region, args=args)
+
 
 
 

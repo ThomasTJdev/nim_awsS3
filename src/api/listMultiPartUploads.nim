@@ -148,9 +148,9 @@ proc listMultipartUploads*(
     
     # GET /?uploads=&delimiter=Delimiter&encoding-type=EncodingType&key-marker=KeyMarker&max-uploads=MaxUploads&prefix=Prefix&upload-id-marker=UploadIdMarker HTTP/1.1
 
+    let httpMethod = HttpGet
     let endpoint = &"htts://{bucket}.{service}.{region}.amazonaws.com"
     var url = &"{endpoint}/?uploads="
-    let httpMethod = HttpGet
 
     if args.delimiter.isSome():
         url = url & "&delimiter=" & args.delimiter.get()

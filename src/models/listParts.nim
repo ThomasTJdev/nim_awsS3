@@ -7,7 +7,7 @@ import
 # https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListMultipartUploads.html
 
 type
-  ListPartsInput* = object
+  ListPartsRequest* = object
 
     ## The bucket name of the uploaded the part.
     ## bucket
@@ -16,8 +16,7 @@ type
     key*: Option[string]
 
     maxParts*: Option[string]
-
-
+    
     partNumberMarker*: Option[string]
  
     uploadId*: Option[string]

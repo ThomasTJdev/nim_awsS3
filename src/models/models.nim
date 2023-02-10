@@ -1,6 +1,7 @@
 import 
     common,
     listMultipartUploads,
+    listParts,
     createMultipartUpload,
     uploadPart,
     completeMultipartUpload,
@@ -9,6 +10,7 @@ import
 export
     common,
     listMultipartUploads,
+    listParts,
     createMultipartUpload,
     uploadPart,
     completeMultipartUpload,

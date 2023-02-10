@@ -1,19 +1,39 @@
 import 
+    os,
     httpclient,
     asyncdispatch,
     strutils,
     strformat,
-    options
-
+    options,
+    xmlparser,
+    xmltree,
+    times
 
 import
     ../models/models,
-    awsSTS
+    ../signedv2,
+    xml2Json,
+    json,
+    jsony,
+    dotenv,
+    utils
 
 
+proc listParts*(
+        client: AsyncHttpClient,
+        credentials: AwsCredentials,
+        headers: HttpHeaders = newHttpHeaders(),
+        bucket: string,
+        region: string,
+        service="s3",
+        args: ListPartsRequest
+    ): Future[ListPartsResult] {.async.} =
+    ## List Multipart Uploads
+    ## https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListParts.html
+    ## This operation lists in-progress multipart uploads. An in-progress multipart upload is a multipart upload that has been initiated using the Initiate Multipart Upload request, but has not yet been completed or aborted.
 
-proc listMultipartUpload*(client: AsyncHttpClient, creds: AwsCreds, args: ListMultipartUploadsRequest): Future[ListMultipartUploadsResult] {.async.} =
     # example request
+
     # GET /Key+?max-parts=MaxParts&part-number-marker=PartNumberMarker&uploadId=UploadId HTTP/1.1
     # Host: Bucket.s3.amazonaws.com
     # x-amz-request-payer: RequestPayer
@@ -21,7 +41,7 @@ proc listMultipartUpload*(client: AsyncHttpClient, creds: AwsCreds, args: ListMu
     # x-amz-server-side-encryption-customer-algorithm: SSECustomerAlgorithm
     # x-amz-server-side-encryption-customer-key: SSECustomerKey
     # x-amz-server-side-encryption-customer-key-MD5: SSECustomerKeyMD5
-    
+
     # example response
     # HTTP/1.1 200
     # x-amz-abort-date: AbortDate
@@ -58,15 +78,106 @@ proc listMultipartUpload*(client: AsyncHttpClient, creds: AwsCreds, args: ListMu
     #    <StorageClass>string</StorageClass>
     #    <ChecksumAlgorithm>string</ChecksumAlgorithm>
     # </ListPartsResult>
+   
+    if args.requestPayer.isSome():
+        headers["x-amz-request-payer"] = args.requestPayer.get()
+    if args.expectedBucketOwner.isSome():
+        headers["x-amz-expected-bucket-owner"] = args.expectedBucketOwner.get()
+    if args.sseCustomerAlgorithm.isSome():
+        headers["x-amz-server-side-encryption-customer-algorithm"] = args.sseCustomerAlgorithm.get()
+    if args.sseCustomerKey.isSome():
+        headers["x-amz-server-side-encryption-customer-key"] = args.sseCustomerKey.get()
+    if args.sseCustomerKeyMD5.isSome():
+        headers["x-amz-server-side-encryption-customer-key-MD5"] = args.sseCustomerKeyMD5.get()
+    
+    # GET /Key+?max-parts=MaxParts&part-number-marker=PartNumberMarker&uploadId=UploadId HTTP/1.1
 
-    let url = &"/{args.key}?max-parts={args.maxParts}&part-number-marker={args.partNumberMarker}&uploadId={args.uploadId}"
     let httpMethod = HttpGet
-    # let authorization = createAuth(creds, url, httpMethod)
-    let headers = newHttpHeaders()
+    let endpoint = &"htts://{bucket}.{service}.{region}.amazonaws.com"
+    var url = &"{endpoint}/{args.key}?uploadId={args.uploadId}"
 
-    let res = await client.request(httpMethod=httpMethod, url=url, headers = headers, body = "")
+    if args.maxParts.isSome():
+        url = url & "&max-parts=" & $args.maxParts.get()
+    if args.partNumberMarker.isSome():
+        url = url & "&part-number-marker=" & $args.partNumberMarker.get()
+    
+    let res = await client.request(credentials=credentials, headers=headers, httpMethod=httpMethod, url=url, region=region, service=service, payload="")
     let body = await res.body
+
+    when defined(dev):
+        echo "\n< listMultipartUploads.url"
+        echo url
+        echo "\n< listMultipartUploads.method"
+        echo httpMethod
+        echo "\n< listMultipartUploads.code"
+        echo res.code
+        echo "\n< listMultipartUploads.headers"
+        echo res.headers
+        echo "\n< listMultipartUploads.body"
+        echo body
+
     if res.code != Http200:
         raise newException(HttpRequestError, "Error: " & $res.code & " " & await res.body)
+
+    let xml = body.parseXML()
+    let json = xml.xml2Json()
+    let jsonStr = json.toJson()
+    echo jsonStr
+    let obj = jsonStr.fromJson(ListPartsResult)
+
+    when defined(dev):
+        echo "\n> xml: ", xml
+        echo "\n> jsonStr: ", jsonStr
+        # echo obj
+        # echo "\n> obj string: ", obj.toJson().parseJson().pretty()
+    result = obj
+
+    if res.headers.hasKey("x-amz-abort-date"):
+      result.abortDate = some(parse($res.headers["x-amz-abort-date"], "ddd',' dd MMM yyyy HH:mm:ss 'GMT'"))
+    if res.headers.hasKey("x-amz-abort-rule-id"):
+        result.abortRuleId = some($res.headers["x-amz-abort-rule-id"])
+    if res.headers.hasKey("x-amz-request-charged"):
+        result.requestCharged = some($res.headers["x-amz-request-charged"])
     
-    # result = body.parseXml[ListMultipartUploadsResult]()
+    
+
+
+
+proc main() {.async.} =
+    # load .env environment variables
+    load()
+    # this is just a scoped testing function
+    let
+        accessKey = os.getEnv("AWS_ACCESS_KEY_ID")
+        secretKey = os.getEnv("AWS_SECRET_ACCESS_KEY")
+        region = "eu-west-2"
+        bucket = "nim-aws-s3-multipart-upload"
+
+    let credentials = AwsCredentials(id: accessKey, secret: secretKey)
+
+    var client = newAsyncHttpClient()
+
+    let args = ListPartsRequest(
+        bucket: bucket,
+        prefix: some("test")
+    )
+    let result = await client.listParts(credentials=credentials, bucket=bucket, region=region, args=args)
+
+    # echo result
+
+
+when isMainModule:
+  try:
+    waitFor main()
+  except:
+    ## treeform async message fix
+    ## https://github.com/nim-lang/Nim/issues/19931#issuecomment-1167658160
+    let msg = getCurrentExceptionMsg()
+    for line in msg.split("\n"):
+      var line = line.replace("\\", "/")
+      if "/lib/pure/async" in line:
+        continue
+      if "#[" in line:
+        break
+      line.removeSuffix("Iter")
+      echo line

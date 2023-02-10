@@ -7,6 +7,36 @@ import
 
 type
 
+    CompletedPart* = object
+
+        ## Entity tag of the uploaded part
+        eTag*: Option[string]
+
+        ## A base64-encoded, 32-bit CRC32 checksum of the uploaded part.
+        ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
+        checksumCRC32*: Option[string]
+
+        ## A base64-encoded, 32-bit CRC32C checksum of the uploaded part.
+        ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
+        checksumCRC32C*: Option[string]
+
+        ## A base64-encoded, 32-bit SHA1 checksum of the uploaded part.
+        ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
+        checksumSHA1*: Option[string]
+
+        ## A base64-encoded, 32-bit SHA256 checksum of the uploaded part.
+        ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
+        checksumSHA256*: Option[string]
+
+        ## The part number of the uploaded part, restricted to 1-10000
+        partNumber*: Option[int]
+
+
+    CompletedMultipartUpload* = object
+        # can result in a 400 error when not provided by the request.
+        parts*: Option[seq[CompletedPart]]
+
+
     CompleteMultipartUploadRequest* = object
 
         ## The bucket name of the uploaded the part.
@@ -58,33 +88,32 @@ type
         sseCustomerKeyMD5*: Option[string]
 
 
-    CompletedPart* = object
+    CompleteMultipartUploadResult* = object
 
-        ## Entity tag of the uploaded part
+        location*: Option[string]
+
+        bucket*: Option[string]
+
+        key*: Option[string]
+
+        expiration*: Option[string]
+
         eTag*: Option[string]
 
-        ## A base64-encoded, 32-bit CRC32 checksum of the uploaded part.
-        ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
         checksumCRC32*: Option[string]
 
-        ## A base64-encoded, 32-bit CRC32C checksum of the uploaded part.
-        ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
         checksumCRC32C*: Option[string]
 
-        ## A base64-encoded, 32-bit SHA1 checksum of the uploaded part.
-        ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
         checksumSHA1*: Option[string]
 
-        ## A base64-encoded, 32-bit SHA256 checksum of the uploaded part.
-        ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
         checksumSHA256*: Option[string]
 
-        ## The part number of the uploaded part, restricted to 1-10000
-        partNumber*: Option[int]
+        serverSideEncryption*: Option[ServerSideEncryption]
 
+        versionId*: Option[string]
 
-    CompletedMultipartUpload* = object
-        # can result in a 400 error when not provided by the request.
-        parts*: Option[seq[CompletedPart]]
+        sseKMSKeyId*: Option[string]
 
-    
+        bucketKeyEnabled*: Option[bool]
+
+        requestCharged*: Option[string]

@@ -24,3 +24,9 @@ type
 
         ## The ID of the expected bucket owner. If the bucket is owned by a different account the request will fail with error code 403.
         expectedBucketOwner*: Option[string]
+
+    AbortMultipartUploadResult* = object
+        ## Tag to specify if the Requester Pays Buckets
+        ## https*://docs.aws.amazon.com/AmazonS3/latest/dev/ObjectsinRequesterPaysBuckets.html"
+        # requestPayer*: Option[RequestPayer | string]
+        requestCharged*: Option[string]

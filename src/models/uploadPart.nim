@@ -11,11 +11,13 @@ import
 
 
 type
-    UploadPartCommandInput*[T: seq[byte] or seq[char] or string] = object
+    # UploadPartCommandRequest*[T: seq[byte] or seq[char] or string] = object
+    UploadPartCommandRequest* = object
 
         ## The body of the request.
         ## favor using bytes over strings as hashing could cause issues
-        body*: T
+        # body*: T
+        body*: string
 
         ## The bucket name of the uploaded the part.
         bucket*: string

@@ -6,8 +6,8 @@ import
     strformat,
     options,
     xmlparser,
-    xmltree
-
+    xmltree,
+    times
 
 import
     ../models/models,
@@ -26,7 +26,7 @@ proc createMultipartUpload*(
       bucket: string,
       region: string,
       service="s3",
-      args: CreateMultipartUploadCommandInput
+      args: CreateMultipartUploadCommandRequest
     ): Future[CreateMultipartUploadResult] {.async.}  =
     ## https://docs.aws.amazon.com/AmazonS3/latest/API/API_CreateMultipartUpload.html
 
@@ -83,9 +83,9 @@ proc createMultipartUpload*(
     #    <UploadId>string</UploadId>
     # </InitiateMultipartUploadResult>
 
+    let httpMethod = HttpPost
     let endpoint = &"htts://{bucket}.{service}.{region}.amazonaws.com"
     var url = &"{endpoint}/{args.key}?uploads="
-    let httpMethod = HttpPost
 
 
     if args.acl.isSome():
@@ -167,7 +167,28 @@ proc createMultipartUpload*(
         # echo obj
         # echo "\n> obj string: ", obj.toJson().parseJson().pretty()
     result = obj
-    
+
+    if res.headers.hasKey("x-amz-abort-date"):
+      result.abortDate = some(parse($res.headers["x-amz-abort-date"], "ddd',' dd MMM yyyy HH:mm:ss 'GMT'"))
+    if res.headers.hasKey("x-amz-abort-rule-id"):
+      result.abortRuleId = some($res.headers["x-amz-abort-rule-id"])
+    if res.headers.hasKey("x-amz-server-side-encryption"):
+      result.serverSideEncryption = some(parseEnum[ServerSideEncryption]($res.headers["x-amz-server-side-encryption"]))
+    if res.headers.hasKey("x-amz-server-side-encryption-customer-algorithm"):
+      result.sseCustomerAlgorithm = some($res.headers["x-amz-server-side-encryption-customer-algorithm"])
+    if res.headers.hasKey("x-amz-server-side-encryption-customer-key-MD5"):
+      result.sseCustomerKeyMD5 = some($res.headers["x-amz-server-side-encryption-customer-key-MD5"])
+    if res.headers.hasKey("x-amz-server-side-encryption-aws-kms-key-id"):
+      result.sseKMSKeyId = some($res.headers["x-amz-server-side-encryption-aws-kms-key-id"])
+    if res.headers.hasKey("x-amz-server-side-encryption-context"):
+      result.sseKMSEncryptionContext = some($res.headers["x-amz-server-side-encryption-context"])
+    if res.headers.hasKey("x-amz-server-side-encryption-bucket-key-enabled"):
+      result.bucketKeyEnabled = some(parseBool($res.headers["x-amz-server-side-encryption-bucket-key-enabled"]))
+    if res.headers.hasKey("x-amz-request-charged"):
+      result.requestCharged = some($res.headers["x-amz-request-charged"])
+    if res.headers.hasKey("x-amz-checksum-algorithm"):
+      result.checksumAlgorithm = some(parseEnum[CheckSumAlgorithm]($res.headers["x-amz-checksum-algorithm"]))
+          
 
 proc main() {.async.} =
     # load .env environment variables
@@ -184,12 +205,13 @@ proc main() {.async.} =
 
     var client = newAsyncHttpClient()
 
-    let args = CreateMultipartUploadCommandInput(
+    let createMultipartUploadCommandRequest = CreateMultipartUploadCommandRequest(
         bucket: bucket,
         key: key,
     )
-    let res = await client.createMultipartUpload(credentials=credentials, bucket=bucket, region=region, args=args)
 
+    let res = await client.createMultipartUpload(credentials=credentials, bucket=bucket, region=region, args=createMultipartUploadCommandRequest)
+    echo res.toJson().parseJson().pretty()
 
 
 when isMainModule:

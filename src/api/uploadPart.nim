@@ -17,20 +17,23 @@ import
     json,
     jsony,
     dotenv,
-    utils
+    utils,
+    nimSHA2
 
 import
     createMultipartUpload
 
 
-proc uploadPart*[T](
+proc uploadPart*(
+# proc uploadPart*[T](
       client: AsyncHttpClient,
       credentials: AwsCredentials,
       headers: HttpHeaders = newHttpHeaders(),
       bucket: string,
       region: string,
       service="s3",
-      args: UploadPartCommandInput[T]
+      # args: UploadPartCommandRequest[T]
+      args: UploadPartCommandRequest
     ): Future[UploadPartResult] {.async.} =
     ## https://docs.aws.amazon.com/AmazonS3/latest/API/API_UploadPart.html
     ## Uploads a part in a multipart upload.
@@ -69,10 +72,10 @@ proc uploadPart*[T](
     # x-amz-request-charged: RequestCharged
 
     
-    let url = &"htts://{bucket}.{service}.{region}.amazonaws.com/{args.key}?partNumber={args.partNumber}&uploadId={args.uploadId}"
     let httpMethod = HttpPut
-    
-    echo "Shit", httpMethod
+    let endpoint = &"htts://{bucket}.{service}.{region}.amazonaws.com"
+    var url = &"{endpoint}/{args.key}?partNumber={args.partNumber}&uploadId={args.uploadId}"
+
     if args.contentLength.isSome():
       headers["Content-Length"] = $args.contentLength.get()
     if args.contentMD5.isSome():
@@ -100,24 +103,45 @@ proc uploadPart*[T](
 
     let res = await client.request(credentials=credentials, headers=headers, httpMethod=httpMethod, url=url, region=region, service=service, payload=args.body)
     let body = await res.body
-    if res.code != Http200:
-        raise newException(HttpRequestError, "Error: failed to uploadPart: " & $res.code & "\n" & body)
+
+    when defined(dev):
+      echo "\n< uploadPart.url"
+      echo url
+      echo "\n< uploadPart.method"
+      echo httpMethod
+      echo "\n< uploadPart.code"
+      echo res.code
+      echo "\n< uploadPart.headers"
+      echo res.headers
+      echo "\n< uploadPart.body"
+      echo body
 
     if res.code != Http200:
         raise newException(HttpRequestError, "Error: " & $res.code & " " & await res.body)
-
-    let xml = body.parseXML()
-    let json = xml.xml2Json()
-    let jsonStr = json.toJson()
-    echo jsonStr
-    let obj = jsonStr.fromJson(UploadPartResult)
-
-    when defined(dev):
-        echo "\n> xml: ", xml
-        echo "\n> jsonStr: ", jsonStr
-        # echo obj
-        # echo "\n> obj string: ", obj.toJson().parseJson().pretty()
-    result = obj
+    
+    if res.headers.hasKey("x-amz-server-side-encryption-customer-algorithm"):
+      result.sseCustomerAlgorithm = some($res.headers["x-amz-server-side-encryption-customer-algorithm"])
+    if res.headers.hasKey("ETag"):
+      result.eTag = some($res.headers["ETag"])
+    if res.headers.hasKey("x-amz-checksum-crc32"):
+      result.checksumCRC32 = some($res.headers["x-amz-checksum-crc32"])
+    if res.headers.hasKey("x-amz-checksum-crc32c"):
+      result.checksumCRC32C = some($res.headers["x-amz-checksum-crc32c"])
+    if res.headers.hasKey("x-amz-checksum-sha1"):
+      result.checksumSHA1 = some($res.headers["x-amz-checksum-sha1"])
+    if res.headers.hasKey("x-amz-checksum-sha256"):
+      result.checksumSHA256 = some($res.headers["x-amz-checksum-sha256"])
+    if res.headers.hasKey("x-amz-server-side-encryption-customer-algorithm"):
+      result.sseCustomerAlgorithm = some($res.headers["x-amz-server-side-encryption-customer-algorithm"])
+    if res.headers.hasKey("x-amz-server-side-encryption-customer-key-MD5"):
+      result.sseCustomerKeyMD5 = some($res.headers["x-amz-server-side-encryption-customer-key-MD5"])
+    if res.headers.hasKey("x-amz-server-side-encryption-aws-kms-key-id"):
+      result.sseKMSKeyId = some($res.headers["x-amz-server-side-encryption-aws-kms-key-id"])
+    if res.headers.hasKey("x-amz-server-side-encryption-bucket-key-enabled"):
+      result.bucketKeyEnabled = some(parseBool(res.headers["x-amz-server-side-encryption-bucket-key-enabled"]))
+    if res.headers.hasKey("x-amz-request-charged"):
+      result.requestCharged = some($res.headers["x-amz-request-charged"])
+  
     
 
 
@@ -142,24 +166,26 @@ proc main() {.async.} =
     var fileBuffer = newSeq[byte](fileSize)
     echo fileHandle.readBytes(fileBuffer, 0, fileBuffer.len)
 
-    var body = fileBuffer[0..<(1024*1024*5)]
-
-    let args = CreateMultipartUploadCommandInput(
+    var body = $(fileBuffer[0..<(1024*1024*5)])
+    
+    # echo body.computeSHA256().toHex().toLowerAscii()
+    # echo ($body).computeSHA256().toHex().toLowerAscii()
+    let args = CreateMultipartUploadCommandRequest(
         bucket: bucket,
         key: key,
     )
     let createMultiPartUploadResult = await client.createMultipartUpload(credentials=credentials, bucket=bucket, region=region, args=args)
 
-    let uploadPartCommandInput = UploadPartCommandInput[typeof(body)](
+    # let uploadPartCommandRequest = UploadPartCommandRequest[typeof(body)](
+    let uploadPartCommandRequest = UploadPartCommandRequest(
         bucket: bucket,
         key: key,
         body: body,
         partNumber: 1,
         uploadId: createMultiPartUploadResult.uploadId
     )
-    let res = await client.uploadPart(credentials=credentials, bucket=bucket, region=region, args=uploadPartCommandInput)
-
-
+    let res = await client.uploadPart(credentials=credentials, bucket=bucket, region=region, args=uploadPartCommandRequest)
+    echo res.toJson().parseJson().pretty()
 
 
 when isMainModule:

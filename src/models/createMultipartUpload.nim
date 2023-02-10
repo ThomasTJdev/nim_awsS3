@@ -10,7 +10,7 @@ import
 
 
 type 
-    CreateMultipartUploadCommandInput* = object
+    CreateMultipartUploadCommandRequest* = object
         ## ACL to apply to the object.
         # acl*: Option[ObjectCannedACL | string]
         acl*: Option[ObjectCannedACL]
@@ -122,7 +122,11 @@ type
 
         # Server-side encryption (SSE) algorithm used to encrypt the upload.
         # https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html
-        serverSideEncryption*: Option[string]
+        # serverSideEncryption*: Option[string]
+        serverSideEncryption*: Option[ServerSideEncryption]
+
+        ## The algorithm used to encrypt the upload.
+        sseCustomerAlgorithm*: Option[string]
 
         # Server-side encryption (SSE) Key used to encrypt the upload.
         # https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html
@@ -130,6 +134,7 @@ type
 
         # Server-side encryption (SSE) MD5 checksum.
         # https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html
+        # sseCustomerKeyMD5*: Option[string]
         sseCustomerKeyMD5*: Option[string]
 
         ## AWS Key Management Service (AWS KMS)

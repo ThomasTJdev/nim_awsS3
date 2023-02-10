@@ -4,22 +4,31 @@ import
     asyncdispatch,
     strutils,
     strformat,
-    options
+    options,
+    xmlparser,
+    xmltree
 
 
 import
     ../models/models,
     ../signedv2,
-    dotenv
+    xml2Json,
+    json,
+    jsony,
+    dotenv,
+    utils
+
 
 proc createMultipartUpload*(
       client: AsyncHttpClient,
       credentials: AwsCredentials,
+      headers: HttpHeaders = newHttpHeaders(),
       bucket: string,
       region: string,
       service="s3",
       args: CreateMultipartUploadCommandInput
     ): Future[CreateMultipartUploadResult] {.async.}  =
+    ## https://docs.aws.amazon.com/AmazonS3/latest/API/API_CreateMultipartUpload.html
 
     # example request
     # POST /{Key+}?uploads HTTP/1.1
@@ -80,60 +89,60 @@ proc createMultipartUpload*(
 
 
     if args.acl.isSome():
-      client.headers["x-amz-acl="] = $args.acl.get()
+      headers["x-amz-acl="] = $args.acl.get()
     if args.cacheControl.isSome():
-      client.headers["Cache-Control="] = args.cacheControl.get()
+      headers["Cache-Control="] = args.cacheControl.get()
     if args.contentDisposition.isSome():
-      client.headers["Content-Disposition="] = args.contentDisposition.get()
+      headers["Content-Disposition="] = args.contentDisposition.get()
     if args.contentEncoding.isSome():
-      client.headers["Content-Encoding="] = args.contentEncoding.get()
+      headers["Content-Encoding="] = args.contentEncoding.get()
     if args.contentLanguage.isSome():
-      client.headers["Content-Language="] = args.contentLanguage.get()
+      headers["Content-Language="] = args.contentLanguage.get()
     if args.contentType.isSome():
-      client.headers["Content-Type="] = args.contentType.get()
+      headers["Content-Type="] = args.contentType.get()
     if args.expires.isSome():
-      client.headers["Expires="] = $args.expires.get()
+      headers["Expires="] = $args.expires.get()
     if args.grantFullControl.isSome():
-      client.headers["x-amz-grant-full-control="] = args.grantFullControl.get()
+      headers["x-amz-grant-full-control="] = args.grantFullControl.get()
     if args.grantRead.isSome():
-      client.headers["x-amz-grant-read="] = args.grantRead.get()
+      headers["x-amz-grant-read="] = args.grantRead.get()
     if args.grantReadACP.isSome():
-      client.headers["x-amz-grant-read-acp="] = args.grantReadACP.get()
+      headers["x-amz-grant-read-acp="] = args.grantReadACP.get()
     if args.grantWriteACP.isSome():
-      client.headers["x-amz-grant-write-acp="] = args.grantWriteACP.get()
+      headers["x-amz-grant-write-acp="] = args.grantWriteACP.get()
     if args.serverSideEncryption.isSome():
-      client.headers["x-amz-server-side-encryption="] = $args.serverSideEncryption.get()
+      headers["x-amz-server-side-encryption="] = $args.serverSideEncryption.get()
     if args.storageClass.isSome():
-      client.headers["x-amz-storage-class="] = $args.storageClass.get()
+      headers["x-amz-storage-class="] = $args.storageClass.get()
     if args.websiteRedirectLocation.isSome():
-      client.headers["x-amz-website-redirect-location="] = args.websiteRedirectLocation.get()
+      headers["x-amz-website-redirect-location="] = args.websiteRedirectLocation.get()
     if args.sseCustomerAlgorithm.isSome():
-      client.headers["x-amz-server-side-encryption-customer-algorithm="] = args.sseCustomerAlgorithm.get()
+      headers["x-amz-server-side-encryption-customer-algorithm="] = args.sseCustomerAlgorithm.get()
     if args.sseCustomerKey.isSome():
-      client.headers["x-amz-server-side-encryption-customer-key="] = args.sseCustomerKey.get()
+      headers["x-amz-server-side-encryption-customer-key="] = args.sseCustomerKey.get()
     if args.sseCustomerKeyMD5.isSome():
-      client.headers["x-amz-server-side-encryption-customer-key-MD5="] = args.sseCustomerKeyMD5.get()
+      headers["x-amz-server-side-encryption-customer-key-MD5="] = args.sseCustomerKeyMD5.get()
     if args.sseKMSKeyId.isSome():
-      client.headers["x-amz-server-side-encryption-aws-kms-key-id="] = args.sseKMSKeyId.get()
+      headers["x-amz-server-side-encryption-aws-kms-key-id="] = args.sseKMSKeyId.get()
     if args.sseKMSEncryptionContext.isSome():
-      client.headers["x-amz-server-side-encryption-context="] = args.sseKMSEncryptionContext.get()
+      headers["x-amz-server-side-encryption-context="] = args.sseKMSEncryptionContext.get()
     if args.requestPayer.isSome():
-      client.headers["x-amz-request-payer="] = args.requestPayer.get()
+      headers["x-amz-request-payer="] = args.requestPayer.get()
     if args.tagging.isSome():
-      client.headers["x-amz-tagging="] = args.tagging.get()
+      headers["x-amz-tagging="] = args.tagging.get()
     if args.objectLockMode.isSome():
-      client.headers["x-amz-object-lock-mode="] = $args.objectLockMode.get()
+      headers["x-amz-object-lock-mode="] = $args.objectLockMode.get()
     if args.objectLockRetainUntilDate.isSome():
-      client.headers["x-amz-object-lock-retain-until-date="] = $args.objectLockRetainUntilDate.get()
+      headers["x-amz-object-lock-retain-until-date="] = $args.objectLockRetainUntilDate.get()
     if args.objectLockLegalHoldStatus.isSome():
-      client.headers["x-amz-object-lock-legal-hold="] = $args.objectLockLegalHoldStatus.get()
+      headers["x-amz-object-lock-legal-hold="] = $args.objectLockLegalHoldStatus.get()
     if args.expectedBucketOwner.isSome():
-      client.headers["x-amz-expected-bucket-owner="] = args.expectedBucketOwner.get()
+      headers["x-amz-expected-bucket-owner="] = args.expectedBucketOwner.get()
     if args.checksumAlgorithm.isSome():
-      client.headers["x-amz-checksum-algorithm="] = $args.checksumAlgorithm.get()
+      headers["x-amz-checksum-algorithm="] = $args.checksumAlgorithm.get()
 
     # let res = await client.request(httpMethod=httpMethod, url=url, headers = headers, body = "")
-    let res = await client.request(credentials, httpMethod, url, region, service, payload="")
+    let res = await client.request(credentials=credentials, headers=headers, httpMethod=httpMethod, url=url, region=region, service=service, payload="")
     let body = await res.body
 
     when defined(dev):
@@ -144,13 +153,21 @@ proc createMultipartUpload*(
         echo "<body: ", body
 
     if res.code != Http200:
-        raise newException(HttpRequestError, "Error: failed to uploadPart: " & $res.code & "\n" & body)
+        raise newException(HttpRequestError, "Error: " & $res.code & " " & await res.body)
 
+    let xml = body.parseXML()
+    let json = xml.xml2Json()
+    let jsonStr = json.toJson()
+    echo jsonStr
+    let obj = jsonStr.fromJson(CreateMultipartUploadResult)
 
-
-
-    # result = body.parseXml[CreateMultipartUploadResult]()    
-
+    when defined(dev):
+        echo "\n> xml: ", xml
+        echo "\n> jsonStr: ", jsonStr
+        # echo obj
+        # echo "\n> obj string: ", obj.toJson().parseJson().pretty()
+    result = obj
+    
 
 proc main() {.async.} =
     # load .env environment variables

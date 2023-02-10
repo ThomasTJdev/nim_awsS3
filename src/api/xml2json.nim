@@ -86,7 +86,9 @@ proc xml2Json*(xmlNode: XmlNode, splitAttr: bool=false): JsonNode =
         if children.len == 0:
             return newJNull()
         if xmlNode.hasEscapedChar():
-            return newJString(xmlNode.getUnescapedString())
+            result = newJObject()
+            result[xmlNode.tag()] = newJString(xmlNode.getUnescapedString())
+            return result
 
         result = newJObject()
         # if element has attributes
@@ -200,7 +202,6 @@ suite "xml2Json":
             child3: {"child4": "value4"}.toTable(),
             child5: "value5"
         )
-        echo jsonString
         check:
 
             obj == expectedObject

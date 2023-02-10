@@ -211,8 +211,7 @@ suite "xml2Json":
     #     echo json.json2xml()
 
     test "xml quotes":
-        let xmlString = """ <?xml version="1.0" encoding="UTF-8"?>
-
-<CompleteMultipartUploadResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Location>http://nim-aws-s3-multipart-upload.s3.eu-west-2.amazonaws.com/testFile.bin</Location><Bucket>nim-aws-s3-multipart-upload</Bucket><Key>testFile.bin</Key><ETag>&quot;48ad599540f59071982d4a00c6c5928d-4&quot;</ETag></CompleteMultipartUploadResult>"""
-        echo xmlString.parseXml()
-        echo xmlString.parseXml().xml2Json()
+        let xmlString = """ <?xml version="1.0" encoding="UTF-8"?><ETag>&quot;48ad599540f59071982d4a00c6c5928d-4&quot;</ETag>"""
+        let  expectedJson = """{"ETag":"48ad599540f59071982d4a00c6c5928d-4"}"""
+        check:
+            xmlString.parseXml().xml2Json().toJson() == expectedJson

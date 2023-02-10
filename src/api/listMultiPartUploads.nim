@@ -220,8 +220,7 @@ proc main() {.async.} =
         prefix: some("test")
     )
     let result = await client.listMultipartUploads(credentials=credentials, bucket=bucket, region=region, args=args)
-
-    # echo result
+    echo result.toJson().parseJson().pretty()
 
 
 when isMainModule:

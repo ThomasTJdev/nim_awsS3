@@ -26,7 +26,7 @@ proc createMultipartUpload*(
       bucket: string,
       region: string,
       service="s3",
-      args: CreateMultipartUploadCommandRequest
+      args: CreateMultipartUploadRequest
     ): Future[CreateMultipartUploadResult] {.async.}  =
     ## https://docs.aws.amazon.com/AmazonS3/latest/API/API_CreateMultipartUpload.html
 
@@ -205,12 +205,12 @@ proc main() {.async.} =
 
     var client = newAsyncHttpClient()
 
-    let createMultipartUploadCommandRequest = CreateMultipartUploadCommandRequest(
+    let createMultipartUploadRequest = CreateMultipartUploadRequest(
         bucket: bucket,
         key: key,
     )
 
-    let res = await client.createMultipartUpload(credentials=credentials, bucket=bucket, region=region, args=createMultipartUploadCommandRequest)
+    let res = await client.createMultipartUpload(credentials=credentials, bucket=bucket, region=region, args=createMultipartUploadRequest)
     echo res.toJson().parseJson().pretty()
 
 

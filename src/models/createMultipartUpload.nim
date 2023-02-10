@@ -10,7 +10,7 @@ import
 
 
 type 
-    CreateMultipartUploadCommandRequest* = object
+    CreateMultipartUploadRequest* = object
         ## ACL to apply to the object.
         # acl*: Option[ObjectCannedACL | string]
         acl*: Option[ObjectCannedACL]

@@ -71,31 +71,17 @@ proc abortMultipartUpload*(
     let url = &"{endpoint}/{args.key}?uploadId={args.uploadId}"
 
     let res = await client.request(credentials=credentials, headers=headers, httpMethod=httpMethod, url=url, region=region, service=service, payload="")
-    let body = await res.body()
+    # let body = await res.body()
 
     when defined(dev):
         echo "<url: ", url
         echo "<method: ", httpMethod
         echo "<code: ", res.code
         echo "<headers: ", res.headers
-        echo "<body: ", body
+        # echo "<body: ", body
 
     if res.code != Http204:
         raise newException(HttpRequestError, "Error: AbortMultipartUpload failed with code: " & $res.code)
-
-
-    let xml = body.parseXML()
-    let json = xml.xml2Json()
-    let jsonStr = json.toJson()
-    echo jsonStr
-    let obj = jsonStr.fromJson(AbortMultipartUploadResult)
-
-    when defined(dev):
-        echo "\n> xml: ", xml
-        echo "\n> jsonStr: ", jsonStr
-        # echo obj
-        # echo "\n> obj string: ", obj.toJson().parseJson().pretty()
-    result = obj
 
     if res.headers.hasKey("x-amz-request-charged"):
       result.requestCharged = some($res.headers["x-amz-request-charged"])
@@ -122,13 +108,20 @@ proc main() {.async.} =
     )
     let listMultipartUploadsRes = await client.listMultipartUploads(credentials=credentials, bucket=bucket, region=region, args=args)
 
-    
-    for result in listMultipartUploadsRes.uploads.get():
+    if listMultipartUploadsRes.uploads.isNone():
+        echo "No uploads found"
+        return
+
+    var uploads = listMultipartUploadsRes.uploads.get()
+    echo uploads.len()
+
+    for upload in uploads:
         let args = AbortMultipartUploadRequest(
             bucket: bucket,
-            key: result.key,
-            uploadId: result.uploadId.get()
+            key: upload.key,
+            uploadId: upload.uploadId.get()
         )
+
         try:
           var abortClient = newAsyncHttpClient()
           let abortMultipartUploadResult = await abortClient.abortMultipartUpload(credentials=credentials, bucket=bucket, region=region, args=args)

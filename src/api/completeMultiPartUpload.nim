@@ -19,7 +19,24 @@ import
     utils
 
 
-proc completedMultipartUpload*(
+proc makePartsXml(parts: seq[CompletedPart]): string =
+    for part in parts:
+        result = result & "<Part>"
+        if part.checksumCRC32.isSome():
+            result = result & &"<ChecksumCRC32>{part.checksumCRC32.get()}</ChecksumCRC32>"
+        if part.checksumCRC32C.isSome():
+            result = result & &"<ChecksumCRC32C>{part.checksumCRC32C.get()}</ChecksumCRC32C>"
+        if part.checksumSHA1.isSome():
+            result = result & &"<ChecksumSHA1>{part.checksumSHA1.get()}</ChecksumSHA1>"
+        if part.checksumSHA256.isSome():
+            result = result & &"<ChecksumSHA256>{part.checksumSHA256.get()}</ChecksumSHA256>"
+        if part.eTag.isSome():
+            result = result & &"<ETag>{part.eTag.get()}</ETag>"
+        if part.partNumber.isSome():
+            result = result & &"<PartNumber>{part.partNumber.get()}</PartNumber>"
+        result = result & "</Part>"
+
+proc completeMultipartUpload*(
         client: AsyncHttpClient,
         credentials: AwsCredentials,
         headers: HttpHeaders = newHttpHeaders(),
@@ -28,6 +45,8 @@ proc completedMultipartUpload*(
         service="s3",
         args: CompleteMultipartUploadRequest
     ): Future[CompleteMultipartUploadResult] {.async.}  =
+    # The CompleteMultipartUpload operation completes a multipart upload by assembling previously uploaded parts.
+    # https://docs.aws.amazon.com/AmazonS3/latest/API/API_CompleteMultipartUpload.html
 
     # example request
     # POST /Key+?uploadId=UploadId HTTP/1.1
@@ -97,7 +116,18 @@ proc completedMultipartUpload*(
     if args.sseCustomerKeyMD5.isSome():
         headers["x-amz-server-side-encryption-customer-key-MD5"] = args.sseCustomerKeyMD5.get()
     
-    let res = await client.request(credentials=credentials, headers=headers, httpMethod=httpMethod, url=url, region=region, service=service, payload="")
+    var partsXml = ""
+    if args.multipartUpload.isSome():
+        if args.multipartUpload.get().parts.isSome():
+            partsXml = args.multipartUpload.get().parts.get().makePartsXml()
+
+    let payload = &"""<CompleteMultipartUpload xmlns="http://s3.amazonaws.com/doc/2006-03-01/">{partsXml}</CompleteMultipartUpload>"""
+    
+    when defined(dev):
+        echo "\n>completeMultiPart.payload: "
+        echo payload
+
+    let res = await client.request(credentials=credentials, headers=headers, httpMethod=httpMethod, url=url, region=region, service=service, payload=payload)
     let body = await res.body
 
     when defined(dev):
@@ -158,7 +188,7 @@ proc main() {.async.} =
         uploadId: uploadId
     )
 
-    let res = await client.completedMultipartUpload(credentials=credentials, bucket=bucket, region=region, args=args)
+    let res = await client.completeMultipartUpload(credentials=credentials, bucket=bucket, region=region, args=args)
     echo res.toJson().parseJson().pretty()
 
 

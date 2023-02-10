@@ -88,9 +88,40 @@ proc xml2Json*(xmlNode: XmlNode, splitAttr: bool=false): JsonNode =
     of xnEntity:
         result = newJObject()
         result["entity"] = newJString(xmlNode.text)
-    
-    
 
+# todo if start to upload multiple xml bodys
+# proc json2xml(jsNode: JsonNode, jsKey: string=""): XmlNode=
+#     case jsNode.kind:
+#     of JString:
+#         result = newText(jsNode.getStr)
+#     of JInt:
+#         result = newText($jsNode.getInt)
+#     of JFloat:
+#         result = newText($jsNode.getFloat)
+#     of JBool:
+#         result = newText($jsNode.getBool)
+#     of JNull:
+#         result = newText("")
+#     of JObject:
+#         result = newElement(if jsKey == "": "root" else: jsKey)
+#         for key, val in jsNode.getFields():
+#             if val.kind == JArray:
+#                 for item in val.elems:
+#                     var child = newElement(key)
+#                     child.add(item.json2xml(key))
+#                     result.add(child)
+#             # elif val.kind == JObject:
+#             else:
+#                 var child = newElement(key)
+#                 child.add(val.json2xml())
+#                 result.add(child)
+
+#     of JArray:
+#         result = newElement(if jsKey == "": "root" else: jsKey)
+#         for val in jsNode.elems:
+#             result.add(val.json2xml())
+   
+            
 
 suite "xml2Json":
 
@@ -113,10 +144,10 @@ suite "xml2Json":
     <Child5>value5</Child5>
 </root>"""
 
+    let expectedJson = """{"id":"123","child1":"value1","child2":["value2","value3"],"child3":{"child4":"value4"},"Child5":"value5"}"""
+    let expectedJsonSplitAttr = """{"attributes":{"id":"123"},"child1":"value1","child2":["value2","value3"],"child3":{"child4":"value4"},"Child5":"value5"}"""
     test "xml->jsonString":
         let xml = xmlString.parseXml()
-        let expectedJson = """{"id":"123","child1":"value1","child2":["value2","value3"],"child3":{"child4":"value4"},"Child5":"value5"}"""
-        let expectedJsonSplitAttr = """{"attributes":{"id":"123"},"child1":"value1","child2":["value2","value3"],"child3":{"child4":"value4"},"Child5":"value5"}"""
         check:
             $xml.xml2Json() == expectedJson
             $xml.xml2Json(true) == expectedJsonSplitAttr
@@ -138,3 +169,8 @@ suite "xml2Json":
         check:
 
             obj == expectedObject
+
+    # test "json->xml":
+    #     let json = expectedJson.parseJson()
+    #     echo json.pretty()
+    #     echo json.json2xml()

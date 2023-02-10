@@ -145,7 +145,7 @@ proc createCanonicalRequest*(
     hashload = payload.computeSHA256().hex().toLowerAscii()
 
   when defined(dev):
-    echo "\n> hashload"
+    echo "\n> createCanonicalRequest.hashload"
     echo  hashload
 
   var
@@ -161,11 +161,11 @@ proc createCanonicalRequest*(
     canonicalRequest = &"{httpMethod}\n{canonicalPath}\n{canonicalQueryString}\n{canonicalHeaders.headersString}\n{canonicalHeaders.signedHeaders}\n{hashload}"
 
   when defined(dev):
-    echo "\n> headers"
+    echo "\n> createCanonicalRequest.headers"
     echo canonicalHeaders.headers
-    echo "\n> signedHeaders"
+    echo "\n> createCanonicalRequest.signedHeaders"
     echo canonicalHeaders.signedHeaders
-    echo "\n> canonicalRequest"
+    echo "\n> createCanonicalRequest.canonicalRequest"
     echo canonicalRequest
 
   result.endpoint = endpoint

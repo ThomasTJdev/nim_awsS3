@@ -2,10 +2,14 @@
 import 
     os,
     httpclient,
+    httpcore,
     asyncdispatch,
     strutils,
     strformat,
     options,
+    math,
+    sequtils,
+    algorithm,
     xmlparser,
     xmltree
 
@@ -21,7 +25,8 @@ import
     nimSHA2
 
 import
-    createMultipartUpload
+    createMultipartUpload,
+    completeMultipartUpload
 
 
 proc uploadPart*(
@@ -119,10 +124,13 @@ proc uploadPart*(
     if res.code != Http200:
         raise newException(HttpRequestError, "Error: " & $res.code & " " & await res.body)
     
+
+
     if res.headers.hasKey("x-amz-server-side-encryption-customer-algorithm"):
       result.sseCustomerAlgorithm = some($res.headers["x-amz-server-side-encryption-customer-algorithm"])
     if res.headers.hasKey("ETag"):
-      result.eTag = some($res.headers["ETag"])
+      # some reason amazon gives back this with quotes...
+      result.eTag = some(($res.headers["ETag"]).strip(chars={'"'}))
     if res.headers.hasKey("x-amz-checksum-crc32"):
       result.checksumCRC32 = some($res.headers["x-amz-checksum-crc32"])
     if res.headers.hasKey("x-amz-checksum-crc32c"):
@@ -146,47 +154,92 @@ proc uploadPart*(
 
 
 proc main() {.async.} =
-    # load .env environment variables
-    load()
-    # this is just a scoped testing function
-    let
-        accessKey = os.getEnv("AWS_ACCESS_KEY_ID")
-        secretKey = os.getEnv("AWS_SECRET_ACCESS_KEY")
-        region = "eu-west-2"
-        bucket = "nim-aws-s3-multipart-upload"
-        key    = "testFile.bin"
+  # load .env environment variables
+  load()
+  # this is just a scoped testing function
+  let
+      accessKey = os.getEnv("AWS_ACCESS_KEY_ID")
+      secretKey = os.getEnv("AWS_SECRET_ACCESS_KEY")
+      region = "eu-west-2"
+      bucket = "nim-aws-s3-multipart-upload"
+      key    = "testFile.bin"
 
-    let credentials = AwsCredentials(id: accessKey, secret: secretKey)
-    var client = newAsyncHttpClient()
+  let credentials = AwsCredentials(id: accessKey, secret: secretKey)
+  var client = newAsyncHttpClient()
 
+  # let fileHandle = open("testFile.bin", fmRead)
+  # let fileSize = fileHandle.getFileSize()
+  # var fileBuffer = newSeq[byte](fileSize)
+  # echo fileHandle.readBytes(fileBuffer, 0, fileBuffer.len)
+  # var body = $(fileBuffer[0..<(1024*1024*5)])
 
-    let fileHandle = open("testFile.bin", fmRead)
-    let fileSize = fileHandle.getFileSize()
+  let fileBuffer = key.readFile()
+  # split the files bigger then 5MB
+  let minChunkSize = 1024*1024*5
 
-    var fileBuffer = newSeq[byte](fileSize)
-    echo fileHandle.readBytes(fileBuffer, 0, fileBuffer.len)
+  let chunkCount = fileBuffer.len div minChunkSize
+  var chunkSizes: seq[int] = @[]
+  for i in 0..<chunkCount:
+    chunkSizes.add(minChunkSize)
+  ## add the remainder to the last chunk
+  chunkSizes[chunkSizes.high].inc((fileBuffer.len mod minChunkSize))
 
-    var body = $(fileBuffer[0..<(1024*1024*5)])
-    
-    # echo body.computeSHA256().toHex().toLowerAscii()
-    # echo ($body).computeSHA256().toHex().toLowerAscii()
-    let args = CreateMultipartUploadCommandRequest(
-        bucket: bucket,
-        key: key,
-    )
-    let createMultiPartUploadResult = await client.createMultipartUpload(credentials=credentials, bucket=bucket, region=region, args=args)
+  # initiate the multipart upload
+  let createMultiPartUploadRequest = CreateMultipartUploadRequest(
+    bucket: bucket,
+    key: key,
+  )
+
+  # a place to collect the upload parts results
+  var completedMultipartUpload = CompletedMultipartUpload(
+    parts: some(newSeq[CompletedPart]())
+  )
+  let createMultiPartUploadResult = await client.createMultipartUpload(credentials=credentials, bucket=bucket, region=region, args=createMultiPartUploadRequest)
+  # upload the part
+  for i in 0..chunkSizes.high:
+    let partNumber =  i+1
+    let startPos = i * minChunkSize
+    let endPos   = startPos + chunkSizes[i] - 1
+    echo "uploading ", startPos, "-", endPos 
+    let body     = fileBuffer[startPos..endPos]
 
     # let uploadPartCommandRequest = UploadPartCommandRequest[typeof(body)](
     let uploadPartCommandRequest = UploadPartCommandRequest(
-        bucket: bucket,
-        key: key,
-        body: body,
-        partNumber: 1,
-        uploadId: createMultiPartUploadResult.uploadId
+      bucket: bucket,
+      key: key,
+      body: body,
+      partNumber: partNumber,
+      uploadId: createMultiPartUploadResult.uploadId
     )
     let res = await client.uploadPart(credentials=credentials, bucket=bucket, region=region, args=uploadPartCommandRequest)
+    echo "\n> uploadPart"
     echo res.toJson().parseJson().pretty()
+    
+    if completedMultipartUpload.parts.isNone:
+      raise newException(ValueError, "parts is None, please initialize it")
+    
+    let completedPart = CompletedPart(
+      eTag: res.eTag,
+      partNumber: some(partNumber)
+    )
+    echo "\n> completedPart"
+    echo completedPart.toJson().parseJson().pretty()
 
+    var parts = completedMultipartUpload.parts.get()
+    parts.add(completedPart)
+    completedMultipartUpload.parts = some(parts)
+
+
+  let completeMultipartUploadRequest = CompleteMultipartUploadRequest(
+    bucket: bucket,
+    key: key,
+    uploadId: createMultiPartUploadResult.uploadId,
+    multipartUpload: some(completedMultipartUpload)
+  )
+  echo completeMultipartUploadRequest.toJson().parseJson().pretty()
+
+  let completeMultipartUploadResult = await client.completeMultipartUpload(credentials=credentials, bucket=bucket, region=region, args=completeMultipartUploadRequest)
+  echo completeMultipartUploadResult.toJson().parseJson().pretty()
 
 when isMainModule:
   try:

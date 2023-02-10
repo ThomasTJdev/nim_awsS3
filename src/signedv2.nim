@@ -8,7 +8,8 @@ import
     httpclient,
     asyncdispatch,
     algorithm,
-    unicode
+    unicode,
+    sugar
 
 import
     dotenv,
@@ -26,8 +27,19 @@ type
     service*: string
 
   CanonicalHeaders* = object
-    headers*: string
+    headers*: HttpHeaders
+    headersString*: string
     signedHeaders*: string
+
+
+  CanonicalRequestResult = object
+    endpoint: string
+    canonicalRequest: string
+    canonicalHeaders: CanonicalHeaders
+    canonicalPath: string
+    canonicalQuery: string
+    hashPayload: string
+    authorization: string
 
 const
   basicISO8601_1 = initTimeFormat "yyyyMMdd\'T\'HHmmss\'Z\'"
@@ -51,12 +63,19 @@ proc condenseWhitespace(x: string): string =
 proc createCanonicalPath(path: string): string =
   return uriEncode(path, {'/'})
 
-proc createCanonicalQueryString(query: string): string =
-  if query.len < 1:
-    return result
-  var queryParts = query.split("&").sorted()
-  for part in queryParts:
-    result.add(uriEncode(part, {'='}))
+proc createCanonicalQueryString(queryString: string): string =
+  var queryParts = queryString.split("&").map(x => x.split("=")).map(x => (x[0], x[1]))
+  if queryParts.len == 0:
+    return ""
+  
+  queryParts = queryParts.sortedByIt(it[0])
+  return encodeQuery(queryParts, omitEq=false)
+
+  # if query.len < 1:
+  #   return result
+  # var queryParts = query.split("&").sorted()
+  # for part in queryParts:
+  #   result.add(uriEncode(part, {'='}))
 
 proc createSigningString*(
     scope: AwsScope,
@@ -79,26 +98,27 @@ proc createCanonicalHeaders(headers: HttpHeaders): CanonicalHeaders =
   var headerKeys = headers.table.keys.toSeq()
   headerKeys = headerKeys.sorted()
 
+  let tempHeaders = newHttpHeaders()
+
   for name in headerKeys:
     let loweredName = toLower(name)
-
     result.signedHeaders.add(loweredName)
     result.signedHeaders.add(';')
 
-    result.headers.add(loweredName)
-    result.headers.add(':')
+    result.headersString.add(loweredName)
+    result.headersString.add(':')
 
     let values: seq[string] = headers.table[name]
     for value in values.items:
-      result.headers.add(condenseWhitespace(value))
+      tempHeaders.add(loweredName, value)
+      result.headersString.add(condenseWhitespace(value))
 
-    result.headers.add("\n")
+    result.headersString.add("\n")
 
   result.signedHeaders = result.signedHeaders[0..<result.signedHeaders.high]
 
-type CanonicalRequestResult = object
-  canonicalRequest: string
-  signedHeaders: string
+
+  result.headers = headers
 
 proc computeSHA256*(data: seq[byte] | seq[char]): SHA256Digest =
   var ctx: SHA256
@@ -116,15 +136,17 @@ proc createCanonicalRequest*(
 
   let
     uri = url.parseUri()
-    cpath = uri.path.createCanonicalPath()
-    cquery = uri.query.createCanonicalQueryString()
+    endpoint = uri.scheme & "://" & uri.hostname 
+    canonicalPath = uri.path.createCanonicalPath()
+    canonicalQueryString = uri.query.createCanonicalQueryString()
 
   var hashload = "UNSIGNED-PAYLOAD"
   if computeHash:
     hashload = payload.computeSHA256().hex().toLowerAscii()
 
   when defined(dev):
-    echo ">hashload: ", hashload
+    echo "\n> hashload"
+    echo  hashload
 
   var
     host = if uri.port.len > 0: &"{uri.hostname}:{uri.port}" else: &"{uri.hostname}"
@@ -136,14 +158,22 @@ proc createCanonicalRequest*(
 
   let
     canonicalHeaders = createCanonicalHeaders(headers)
-    canonicalRequest = &"{httpMethod}\n{cpath}\n{cquery}\n{canonicalHeaders.headers}\n{canonicalHeaders.signedHeaders}\n{hashload}"
+    canonicalRequest = &"{httpMethod}\n{canonicalPath}\n{canonicalQueryString}\n{canonicalHeaders.headersString}\n{canonicalHeaders.signedHeaders}\n{hashload}"
 
   when defined(dev):
-    echo ">canonicalRequest: ", canonicalRequest
-    echo ">\n"
+    echo "\n> headers"
+    echo canonicalHeaders.headers
+    echo "\n> signedHeaders"
+    echo canonicalHeaders.signedHeaders
+    echo "\n> canonicalRequest"
+    echo canonicalRequest
 
-  result.signedHeaders = canonicalHeaders.signedHeaders
+  result.endpoint = endpoint
+  result.canonicalHeaders = canonicalHeaders
   result.canonicalRequest = canonicalRequest
+  result.canonicalPath = canonicalPath
+  result.canonicalQuery = canonicalQueryString
+  result.hashPayload = hashload
 
 
 proc createSignature*(key: string, sts: string): string =
@@ -181,10 +211,8 @@ proc createAuthorizationHeader*(
 
   return &"{algorithm} Credential={credential}, SignedHeaders={signedHeaders}, Signature={signature}"
 
-proc createAuthaurization*(
-    id: string,
-    key: string,
-    # request: AwsRequest,
+proc createAuthorizedCanonicalRequest*(
+    credentials: AwsCredentials,
     httpMethod: HttpMethod,
     url: string,
     payload: seq[byte] | seq[char] | string,
@@ -192,25 +220,24 @@ proc createAuthaurization*(
     scope: AwsScope,
     algorithm: string,
     termination: string
-  ): string =
+  ): CanonicalRequestResult =
   # https://docs.aws.amazon.com/general/latest/gr/create-signed-request.html
   # Step 1: Create a canonical request
   # Step 2: Create a hash of the canonical request
   # Step 3: Create a string to sign
   # Step 4: Calculate the signature
   # Step 5: Add the signature to the request
-
+  var headers = headers
   headers["x-amz-date"] = scope.date.format(basicISO8601_1)
   # aws hash is sensitive to string | seq[char|byte]
   # create canonical request
-  let canonicalRequestResult = createCanonicalRequest(
+  var canonicalRequestResult = createCanonicalRequest(
     headers,
     httpMethod,
     url,
     payload,
     computeHash=true
   )
-  headers.del("host")
 
   # create string to sign
   let to_sign = createSigningString(
@@ -220,45 +247,21 @@ proc createAuthaurization*(
     termination
   )
   # create signature
-  let sig = createSignature(key, to_sign)
+  let 
+    signingKey = signingKey(credentials.secret, scope, termination)
+    sig = createSignature(signingKey, to_sign)
 
   # create authorization header
-  return createAuthorizationHeader(
-    id,
+  let authorization = createAuthorizationHeader(
+    credentials.id,
     scope,
-    canonicalRequestResult.signedHeaders,
+    canonicalRequestResult.canonicalHeaders.signedHeaders,
     sig,
     algorithm,
     termination
   )
-
-proc createAuth*(
-    creds: AwsCredentials,
-    httpMethod: HttpMethod,
-    url: string,
-    payload: seq[byte] | seq[char] | string,
-    headers: HttpHeaders,
-    scope: AwsScope,
-    algorithm: string,
-    termination: string
-    ): string =
-  var
-    signingKey = signingKey(creds.secret, scope, termination)
-    authorization = createAuthaurization(
-      creds.id,
-      signingKey,
-      httpMethod,
-      url,
-      payload,
-      headers,
-      scope,
-      algorithm,
-      termination
-    )
-
-  # headers["authorization"] = authorization
-  return authorization
-
+  canonicalRequestResult.authorization = authorization
+  return canonicalRequestResult
 
 proc request*(
     client: AsyncHttpClient,
@@ -275,20 +278,31 @@ proc request*(
   let
     date = getTime().utc()
     scope = AwsScope(date: date, region: region, service: service)
-    auth = createAuth(credentials, httpMethod, url, payload, client.headers, scope,
-        algorithm, termination)
+  
+  var authorizedCanonicalRequest = createAuthorizedCanonicalRequest(
+        credentials, 
+        httpMethod,
+        url,
+        payload,
+        client.headers,
+        scope,
+        algorithm,
+        termination
+      )
 
-  client.headers["Authorization"] = auth
+  authorizedCanonicalRequest.canonicalHeaders.headers["authorization"] = authorizedCanonicalRequest.authorization
+  var canonicalURL = authorizedCanonicalRequest.endpoint & authorizedCanonicalRequest.canonicalPath & "?" & authorizedCanonicalRequest.canonicalQuery
+
 
   when defined(dev):
-    echo "httpMethod"
+    echo "\n> request.httpMethod"
     echo httpMethod
-    echo "url"
-    echo url
-    echo "client.httpClient.headers"
-    echo client.headers
-
-  return client.request(url = url, httpMethod = httpMethod, body = $payload)
+    echo "\n> request.url"
+    echo canonicalURL
+    echo "\n> request.client.httpClient.headers"
+    echo authorizedCanonicalRequest.canonicalHeaders.headers
+  
+  return client.request(url = canonicalURL, httpMethod = httpMethod, headers=authorizedCanonicalRequest.canonicalHeaders.headers, body = $payload)
 
 
 

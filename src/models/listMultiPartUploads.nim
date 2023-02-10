@@ -84,4 +84,4 @@ type
     nextUploadIdMarker*: Option[string]
 
     ## the container for the list of multipart uploads.
-    upload*: Option[seq[MultipartUpload]]
+    uploads*: Option[seq[MultipartUpload]]

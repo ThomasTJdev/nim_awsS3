@@ -169,11 +169,16 @@ proc listMultipartUploads*(
     let body = await res.body
 
     when defined(dev):
-        echo "\n<url: ", url
-        echo "\n<method: ", httpMethod
-        echo "\n<code: ", res.code
-        echo "\n<headers: ", res.headers
-        echo "\n<body: ", body
+        echo "\n< listMultipartUploads.url"
+        echo url
+        echo "\n< listMultipartUploads.method"
+        echo httpMethod
+        echo "\n< listMultipartUploads.code"
+        echo res.code
+        echo "\n< listMultipartUploads.headers"
+        echo res.headers
+        echo "\n< listMultipartUploads.body"
+        echo body
 
     if res.code != Http200:
         raise newException(HttpRequestError, "Error: " & $res.code & " " & await res.body)
@@ -185,10 +190,10 @@ proc listMultipartUploads*(
     let obj = jsonStr.fromJson(ListMultipartUploadsResult)
 
     when defined(dev):
-        echo "\n>xml: ", xml
-        echo "\n>jsonStr: ", jsonStr
+        echo "\n> xml: ", xml
+        echo "\n> jsonStr: ", jsonStr
         # echo obj
-        echo "\n>obj string: ", obj.toJson().parseJson().pretty()
+        # echo "\n> obj string: ", obj.toJson().parseJson().pretty()
     result = obj
     
 
@@ -210,10 +215,11 @@ proc main() {.async.} =
 
     let args = ListMultipartUploadsRequest(
         bucket: bucket,
+        prefix: some("test")
     )
     let result = await client.listMultipartUploads(credentials=credentials, bucket=bucket, region=region, args=args)
 
-
+    # echo result
 
 
 when isMainModule:

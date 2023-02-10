@@ -11,6 +11,15 @@ import
     ../models/models,
     jsony
 
+
+
+
+proc dumpHook*(s: var string, v: Option[DateTime]) =
+    s.add("\"" & v.get().format("yyyy-mm-dd'T'hh:mm:ss'.'fff'Z'") & "\"" )
+
+proc dumpHook*(s: var string, v: DateTime) =
+    s.add("\"" & v.format("yyyy-mm-dd'T'hh:mm:ss'.'fff'Z'") & "\"" )
+
 proc parseHook*(s: string, i: var int, v: var DateTime) =
     ## jsony time convert
     ## runs through times and tries to parse them
@@ -24,15 +33,6 @@ proc parseHook*(s: string, i: var int, v: var DateTime) =
         except:
             continue
     raise newException(ValueError, "Invalid date format: " & str)
-    
-
-proc dumpHook*(s: var string, v: Option[DateTime]) =
-    s.add("\"" & v.get().format("yyyy-mm-dd'T'hh:mm:ss'.'fff'Z'") & "\"" )
-
-proc dumpHook*(s: var string, v: DateTime) =
-    s.add("\"" & v.format("yyyy-mm-dd'T'hh:mm:ss'.'fff'Z'") & "\"" )
-
-
 
 proc parseHook*(s: string, i: var int, v: var int) =
     ## attempt to parse Ints
@@ -54,6 +54,9 @@ proc parseHook*(s: string, i: var int, v: var Option[bool]) =
 
     
 proc renameHook*(v: object, fieldName: var string) =
+    # loosely match field  to names
+    # MyField -> myfield
+    # myField -> myFields
     runnableExamples:
         type
             MyTest = object
@@ -69,8 +72,15 @@ proc renameHook*(v: object, fieldName: var string) =
         let myTest =  myJson.fromJson(MyTest)
         echo myTest
 
+    # MyField -> myField
     var tempFieldName = fieldName
     tempFieldName[0] = tempFieldName[0].toLowerAscii()
+    for x , _  in v.fieldPairs():
+        if tempFieldName == x:
+            fieldName = tempFieldName
+            return
+    # try to match with an upload-> uploads
+    tempFieldName &= "s"
     for x , _  in v.fieldPairs():
         if tempFieldName == x:
             fieldName = tempFieldName

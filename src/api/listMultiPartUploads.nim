@@ -1,3 +1,4 @@
+# std
 import 
     os,
     httpclient,
@@ -8,7 +9,7 @@ import
     xmlparser,
     xmltree
 
-
+# other
 import
     ../models/models,
     ../signedv2,
@@ -18,19 +19,20 @@ import
     dotenv,
     utils
 
-type Node = ref object
-
-proc renameHook*(v: var Node, fieldName: var string) =
-    echo fieldName
 
 proc listMultipartUploads*(
         client: AsyncHttpClient,
         credentials: AwsCredentials,
+        headers: HttpHeaders = newHttpHeaders(),
         bucket: string,
         region: string,
         service="s3",
         args: ListMultipartUploadsRequest
     ): Future[ListMultipartUploadsResult] {.async.} =
+    ## List Multipart Uploads
+    ## https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListMultipartUploads.html
+    ## This operation lists in-progress multipart uploads. An in-progress multipart upload is a multipart upload that has been initiated using the Initiate Multipart Upload request, but has not yet been completed or aborted.
+
     # example request
 
     # GET /?uploads&delimiter=Delimiter&encoding-type=EncodingType&key-marker=KeyMarker&max-uploads=MaxUploads&prefix=Prefix&upload-id-marker=UploadIdMarker HTTP/1.1
@@ -148,6 +150,7 @@ proc listMultipartUploads*(
 
     let endpoint = &"htts://{bucket}.{service}.{region}.amazonaws.com"
     var url = &"{endpoint}/?uploads="
+    let httpMethod = HttpGet
 
     if args.delimiter.isSome():
         url = url & "&delimiter=" & args.delimiter.get()
@@ -163,9 +166,8 @@ proc listMultipartUploads*(
         url = url & "&upload-id-marker=" & args.uploadIdMarker.get()
     
 
-    let httpMethod = HttpGet
 
-    let res = await client.request(credentials, httpMethod, url, region, service, payload="")
+    let res = await client.request(credentials=credentials, headers=headers, httpMethod=httpMethod, url=url, region=region, service=service, payload="")
     let body = await res.body
 
     when defined(dev):

@@ -8,11 +8,18 @@ import
 
 import
     ../models/models,
-    awsSTS
+    ../signedv2
 
 
 
-proc listMultipartUpload*(client: AsyncHttpClient, creds: AwsCreds, args: ListMultipartUploadsRequest): Future[ListMultipartUploadsResult] {.async.} =
+proc listMultipartUploads*(
+        client: AsyncHttpClient,
+        credentials: AwsCredentials,
+        bucket: string,
+        region: string,
+        service="s3",
+        args: ListMultipartUploadsRequest
+    ): Future[ListMultipartUploadsResult] {.async.} =
     # example request
 
     # GET /?uploads&delimiter=Delimiter&encoding-type=EncodingType&key-marker=KeyMarker&max-uploads=MaxUploads&prefix=Prefix&upload-id-marker=UploadIdMarker HTTP/1.1
@@ -123,16 +130,76 @@ proc listMultipartUpload*(client: AsyncHttpClient, creds: AwsCreds, args: ListMu
     #   </Upload>
     # </ListMultipartUploadsResult>
     
+    if args.expectedBucketOwner.isSome():
+        client.headers["x-amz-expected-bucket-owner"] = args.expectedBucketOwner.get()
+    
+    # GET /?uploads=&delimiter=Delimiter&encoding-type=EncodingType&key-marker=KeyMarker&max-uploads=MaxUploads&prefix=Prefix&upload-id-marker=UploadIdMarker HTTP/1.1
 
-    # GET /?uploads&delimiter=Delimiter&encoding-type=EncodingType&key-marker=KeyMarker&max-uploads=MaxUploads&prefix=Prefix&upload-id-marker=UploadIdMarker HTTP/1.1
-    let url = &"/?uploads&delimeter{args.delimeter}&encoding-type{args.encoding_type}&key-marker{args.key_marker}&max-uploads{args.max_uploads}&prefix{args.prefix}&upload-id-marker{args.upload_id_marker}";
+    let endpoint = &"htts://{bucket}.{service}.{region}.amazonaws.com"
+    var url = &"{endpoint}/?uploads="
+
+    if args.delimiter.isSome():
+        url = url & "&delimiter=" & args.delimiter.get()
+    if args.encodingType.isSome():
+        url = url & "&encoding-type=" & args.encodingType.get()
+    if args.keyMarker.isSome():
+        url = url & "&key-marker=" & args.keyMarker.get()
+    if args.maxUploads.isSome():
+        url = url & "&max-uploads=" & $args.maxUploads.get()
+    if args.prefix.isSome():
+        url = url & "&prefix=" & args.prefix.get()
+    if args.uploadIdMarker.isSome():
+        url = url & "&upload-id-marker=" & args.uploadIdMarker.get()
+    
+
     let httpMethod = HttpGet
-    # let authorization = createAuth(creds, url, httpMethod)
-    let headers = newHttpHeaders()
 
-    let res = await client.request(httpMethod=httpMethod, url=url, headers = headers, body = "")
+    let res = await client.request(credentials, httpMethod, url, region, service, payload="")
+
     let body = await res.body
     if res.code != Http200:
         raise newException(HttpRequestError, "Error: " & $res.code & " " & await res.body)
+
+    when defined(dev):
+        echo "<code: ", res.code
+        echo "<headers: ", res.headers
+        echo "<body: ", body
     
     # result = body.parseXml[ListMultipartUploadsResult]()
+
+
+
+proc main() {.async.} =
+    # this is just a scoped testing function
+    let
+        accessKey = "AKIA3K2AWBMTIA5B2ZCV"
+        secretKey = "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"
+        region = "eu-west-2"
+        bucket = "nim-aws-s3-multipart-upload"
+
+    let credentials = AwsCredentials(id: accessKey, secret: secretKey)
+
+    var client = newAsyncHttpClient()
+
+    let args = ListMultipartUploadsRequest(
+        bucket: bucket,
+    )
+    let res = await client.listMultipartUploads(credentials=credentials, bucket=bucket, region=region, args=args)
+
+
+
+when isMainModule:
+  try:
+    waitFor main()
+  except:
+    ## treeform async message fix
+    ## https://github.com/nim-lang/Nim/issues/19931#issuecomment-1167658160
+    let msg = getCurrentExceptionMsg()
+    for line in msg.split("\n"):
+      var line = line.replace("\\", "/")
+      if "/lib/pure/async" in line:
+        continue
+      if "#[" in line:
+        break
+      line.removeSuffix("Iter")
+      echo line

@@ -267,6 +267,7 @@ proc request*(
     client: AsyncHttpClient,
     credentials: AwsCredentials,
     httpMethod: HttpMethod,
+    headers: HttpHeaders = newHttpHeaders(),
     url: string,
     region: string,
     service: string,
@@ -284,7 +285,7 @@ proc request*(
         httpMethod,
         url,
         payload,
-        client.headers,
+        headers,
         scope,
         algorithm,
         termination
@@ -321,7 +322,7 @@ proc main() {.async.} =
       url = &"https://{bucket}.s3.{region}.amazonaws.com/?uploads="
       service = "s3"
       payload = ""
-      res = await client.request(credentials, HttpGet, url, region, service, payload)
+      res = await client.request(credentials=credentials, httpMethod=HttpGet, url=url, region=region, service=service, payload=payload)
       body = await res.body
 
     if res.code != Http200:

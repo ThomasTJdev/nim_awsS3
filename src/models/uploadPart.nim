@@ -2,15 +2,20 @@ import
     common,
     options
 
+# type
+#     Body = openArray[byte] or openArray[char] or string
+
 # this file is the tyoe definition for the s3 api taken from the aws docs
 # https://docs.aws.amazon.com/AmazonS3/latest/API/API_UploadPart.html
 
-type
-    UploadPartCommandInput* = object
-       
-        ## Object data
-        body: Option[openArray[byte] | string]
 
+
+type
+    UploadPartCommandInput*[T: seq[byte] or seq[char] or string] = object
+
+        ## The body of the request.
+        ## favor using bytes over strings as hashing could cause issues
+        body*: T
 
         ## The bucket name of the uploaded the part.
         bucket*: string
@@ -23,7 +28,7 @@ type
  
         ## The algorithm used to verify the integrity of the part data.
         ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
-        checksumAlgorithm: Option[ChecksumAlgorithm | string]
+        checksumAlgorithm: Option[ChecksumAlgorithm]
 
         ## A base64-encoded, 32-bit CRC32 checksum of the uploaded part.
         ## https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
@@ -45,10 +50,10 @@ type
         key*: string
 
         ## The ID that identifies the multipart upload.
-        eploadId*: string
+        uploadId*: string
         
         ## The part number of the part being uploaded. range 1-10000
-        partNumber: int
+        partNumber*: int
         
         # Server-side encryption (SSE) algorithm used to encrypt the upload.
         # https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html
@@ -70,7 +75,6 @@ type
         ## List the expected bucket owner for this request. If the bucket is owned by a different owner, the server will return an HTTP 403 (Access Denied) error.
         ## x-amz-expected-bucket-owner
         expectedBucketOwner*: Option[string]
-
 
     UploadPartResult* = object
         

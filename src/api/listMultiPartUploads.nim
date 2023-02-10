@@ -1,4 +1,5 @@
 import 
+    os,
     httpclient,
     asyncdispatch,
     strutils,
@@ -8,8 +9,8 @@ import
 
 import
     ../models/models,
-    ../signedv2
-
+    ../signedv2,
+    dotenv
 
 
 proc listMultipartUploads*(
@@ -157,23 +158,29 @@ proc listMultipartUploads*(
     let res = await client.request(credentials, httpMethod, url, region, service, payload="")
 
     let body = await res.body
-    if res.code != Http200:
-        raise newException(HttpRequestError, "Error: " & $res.code & " " & await res.body)
 
     when defined(dev):
+        echo "<url: ", url
+        echo "<method: ", httpMethod
         echo "<code: ", res.code
         echo "<headers: ", res.headers
         echo "<body: ", body
+
+    if res.code != Http200:
+        raise newException(HttpRequestError, "Error: " & $res.code & " " & await res.body)
+
     
     # result = body.parseXml[ListMultipartUploadsResult]()
 
 
 
 proc main() {.async.} =
+    # load .env environment variables
+    load()
     # this is just a scoped testing function
     let
-        accessKey = "AKIA3K2AWBMTIA5B2ZCV"
-        secretKey = "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"
+        accessKey = os.getEnv("AWS_ACCESS_KEY_ID")
+        secretKey = os.getEnv("AWS_SECRET_ACCESS_KEY")
         region = "eu-west-2"
         bucket = "nim-aws-s3-multipart-upload"
 

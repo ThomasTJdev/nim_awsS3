@@ -1,4 +1,5 @@
 import 
+    os,
     httpclient,
     asyncdispatch,
     strutils,
@@ -8,9 +9,17 @@ import
 
 import
     ../models/models,
-    awsSTS
+    ../signedv2,
+    dotenv
 
-proc abortMultipartUpload*(client: AsyncHttpClient, creds: AwsCreds, args: AbortMultipartUploadRequest): Future[void] {.async.}  =
+proc abortMultipartUpload*(
+        client: AsyncHttpClient,
+        credentials: AwsCredentials,
+        bucket: string,
+        region: string,
+        service="s3",
+        args: AbortMultipartUploadRequest
+    ): Future[void] {.async.}  =
     # request 
 
     # DELETE /Key+?uploadId=UploadId HTTP/1.1
@@ -42,22 +51,68 @@ proc abortMultipartUpload*(client: AsyncHttpClient, creds: AwsCreds, args: Abort
     # Server: AmazonS3 
 
     if args.requestPayer.isSome():
-        let requestPayer = args.requestPayer.get()
-        client.headers.add("x-amz-request-payer", requestPayer)
-
-
+        client.headers["x-amz-request-payer"] = args.requestPayer.get()
+    if args.expectedBucketOwner.isSome():
+        client.headers["x-amz-expected-bucket-owner"] = args.expectedBucketOwner.get()
+    
+    let endpoint = &"https://{args.bucket}.s3.{args.region}.amazonaws.com"
     let url = &"{endpoint}/{args.key}?uploadId={args.uploadId}"
     let httpMethod = HttpDelete
-    # let authorization = createAuthorizationHeader(
-    #     creds = creds,
-    #     httpMethod = HttpDelete,
-    #     url = url,
-    #     headers = client.headers
-    # )
-    
-    let res = await client.request(
-        httpMethod = httpMethod,
-        url = url
-    )
+
+    let res = await client.request(credentials, httpMethod, url, region, service, payload="")
+
+    let body = await res.body()
+
+    when defined(dev):
+        echo "<url: ", url
+        echo "<method: ", httpMethod
+        echo "<code: ", res.code
+        echo "<headers: ", res.headers
+        echo "<body: ", body
+
     if res.code != Http204:
         raise newException(HttpRequestError, "Error: AbortMultipartUpload failed with code: " & $res.code)
+    
+proc main() {.async.} =
+    # load .env environment variables
+    load()
+    # this is just a scoped testing function
+    let
+        accessKey = os.getEnv("AWS_ACCESS_KEY_ID")
+        secretKey = os.getEnv("AWS_SECRET_ACCESS_KEY")
+        region    = "eu-west-2"
+        bucket    = "nim-aws-s3-multipart-upload"
+        key       = "testFile.bin"
+        uploadId  = ""  
+
+    let credentials = AwsCredentials(id: accessKey, secret: secretKey)
+
+    var client = newAsyncHttpClient()
+
+
+
+    let args = AbortMultipartUploadRequest(
+        bucket: bucket,
+        key: key,
+        uploadId: uploadId
+    )
+
+    await client.abortMultipartUpload(credentials=credentials, bucket=bucket, region=region, args=args)
+
+
+
+when isMainModule:
+  try:
+    waitFor main()
+  except:
+    ## treeform async message fix
+    ## https://github.com/nim-lang/Nim/issues/19931#issuecomment-1167658160
+    let msg = getCurrentExceptionMsg()
+    for line in msg.split("\n"):
+      var line = line.replace("\\", "/")
+      if "/lib/pure/async" in line:
+        continue
+      if "#[" in line:
+        break
+      line.removeSuffix("Iter")
+      echo line

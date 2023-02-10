@@ -9,8 +9,11 @@ import
     asyncdispatch,
     algorithm,
     unicode
+
 import
-    nimSHA2, hmac
+    dotenv,
+    nimSHA2,
+    hmac
 
 type
   AwsCredentials* = object
@@ -291,6 +294,8 @@ proc request*(
 
 
 proc main() {.async.} =
+  # load .env environment variables
+  load()
   # this is just a scoped testing function
   proc listMultipartUpload(
     client: AsyncHttpClient,
@@ -311,8 +316,8 @@ proc main() {.async.} =
     return body
 
   let
-    accessKey = "AKIA3K2AWBMTIA5B2ZCV"
-    secretKey = "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"
+    accessKey = os.getEnv("AWS_ACCESS_KEY_ID")
+    secretKey = os.getEnv("AWS_SECRET_ACCESS_KEY")
     region = "eu-west-2"
     bucket = "nim-aws-s3-multipart-upload"
 

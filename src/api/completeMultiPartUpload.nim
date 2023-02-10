@@ -10,7 +10,12 @@ import
     ../models/models,
     awsSTS
 
-proc completedMultipartUpload*(client: AsyncHttpClient, creds: AwsCreds, args: CompleteMultipartUploadRequest): Future[bool] {.async.}  =
+proc completedMultipartUpload*(
+        client: AsyncHttpClient,
+        headers: HttpHeaders = newHttpHeaders(),
+        creds: AwsCreds,
+        args: CompleteMultipartUploadRequest
+    ): Future[bool] {.async.}  =
 
     # example request
     # POST /Key+?uploadId=UploadId HTTP/1.1
@@ -58,6 +63,26 @@ proc completedMultipartUpload*(client: AsyncHttpClient, creds: AwsCreds, args: C
     # </CompleteMultipartUploadResult>
 
 
+    if args.checksumCRC32.isSome():
+        headers["x-amz-checksum-crc32"]        = args.checksumCRC32.get()
+    if args.checksumCRC32C.isSome():
+        headers["x-amz-checksum-crc32c"]       = args.checksumCRC32C.get()
+    if args.checksumSHA1.isSome():
+        headers["x-amz-checksum-sha1"]         = args.checksumSHA1.get()
+    if args.checksumSHA256.isSome():
+        headers["x-amz-checksum-sha256"]       = args.checksumSHA256.get()
+    if args.requestPayer.isSome():
+        headers["x-amz-request-payer"]         = args.requestPayer.get()
+    if args.expectedBucketOwner.isSome():
+        headers["x-amz-expected-bucket-owner"] = args.expectedBucketOwner.get()
+    if args.sseCustomerAlgorithm.isSome():
+        headers["x-amz-server-side-encryption-customer-algorithm"] = args.sseCustomerAlgorithm.get()
+    if args.sseCustomerKey.isSome():
+        headers["x-amz-server-side-encryption-customer-key"] = args.sseCustomerKey.get()
+    if args.sseCustomerKeyMD5.isSome():
+        headers["x-amz-server-side-encryption-customer-key-MD5"] = args.sseCustomerKeyMD5.get()
+    
+    client.headers = headers
 
     let url = &"{endpoint}/{args.key}?uploadId={args.uploadId}"
     let httpMethod = HttpPost

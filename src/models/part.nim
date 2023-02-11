@@ -3,10 +3,10 @@ import
     times,
     common
 
-# this file is the tyoe definition for the s3 api taken from the aws docs
-# https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListMultipartUploads.html
 
 type
+    ## this file is the type definition for the s3 api was created from the aws docs
+    ## https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListMultipartUploads.html
     Part* = object
 
         ## A base64-encoded, 32-bit CRC32 checksum of the uploaded part.

@@ -2,10 +2,9 @@ import
     common,
     options
 
-# this file is the tyoe definition for the s3 api taken from the aws docs
-# https://docs.aws.amazon.com/AmazonS3/latest/API/API_AbortMultipartUpload.html
-
 type
+    ## this file is the type definition for the s3 api was created from the aws docs
+    ## https://docs.aws.amazon.com/AmazonS3/latest/API/API_AbortMultipartUpload.html
     AbortMultipartUploadRequest* = object
 
         ## The bucket name upload the part to.

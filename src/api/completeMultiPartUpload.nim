@@ -112,9 +112,9 @@ proc completeMultipartUpload*(
     if args.sseCustomerAlgorithm.isSome():
         headers["x-amz-server-side-encryption-customer-algorithm"] = args.sseCustomerAlgorithm.get()
     if args.sseCustomerKey.isSome():
-        headers["x-amz-server-side-encryption-customer-key"] = args.sseCustomerKey.get()
+        headers["x-amz-server-side-encryption-customer-key"]       = args.sseCustomerKey.get()
     if args.sseCustomerKeyMD5.isSome():
-        headers["x-amz-server-side-encryption-customer-key-MD5"] = args.sseCustomerKeyMD5.get()
+        headers["x-amz-server-side-encryption-customer-key-MD5"]   = args.sseCustomerKeyMD5.get()
     
     var partsXml = ""
     if args.multipartUpload.isSome():
@@ -192,17 +192,17 @@ proc main() {.async.} =
 
 
 when isMainModule:
-  try:
-    waitFor main()
-  except:
-    ## treeform async message fix
-    ## https://github.com/nim-lang/Nim/issues/19931#issuecomment-1167658160
-    let msg = getCurrentExceptionMsg()
-    for line in msg.split("\n"):
-      var line = line.replace("\\", "/")
-      if "/lib/pure/async" in line:
-        continue
-      if "#[" in line:
-        break
-      line.removeSuffix("Iter")
-      echo line
+    try:
+        waitFor main()
+    except:
+        ## treeform async message fix
+        ## https://github.com/nim-lang/Nim/issues/19931#issuecomment-1167658160
+        let msg = getCurrentExceptionMsg()
+        for line in msg.split("\n"):
+            var line = line.replace("\\", "/")
+            if "/lib/pure/async" in line:
+                continue
+            if "#[" in line:
+                break
+            line.removeSuffix("Iter")
+            echo line

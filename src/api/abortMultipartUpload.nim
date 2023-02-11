@@ -131,17 +131,17 @@ proc main() {.async.} =
 
 
 when isMainModule:
-  try:
-    waitFor main()
-  except:
-    ## treeform async message fix
-    ## https://github.com/nim-lang/Nim/issues/19931#issuecomment-1167658160
-    let msg = getCurrentExceptionMsg()
-    for line in msg.split("\n"):
-      var line = line.replace("\\", "/")
-      if "/lib/pure/async" in line:
-        continue
-      if "#[" in line:
-        break
-      line.removeSuffix("Iter")
-      echo line
+    try:
+        waitFor main()
+    except:
+        ## treeform async message fix
+        ## https://github.com/nim-lang/Nim/issues/19931#issuecomment-1167658160
+        let msg = getCurrentExceptionMsg()
+        for line in msg.split("\n"):
+            var line = line.replace("\\", "/")
+            if "/lib/pure/async" in line:
+                continue
+            if "#[" in line:
+                break
+            line.removeSuffix("Iter")
+            echo line

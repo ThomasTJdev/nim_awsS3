@@ -124,12 +124,12 @@ proc uploadPart*(
     if res.code != Http200:
         raise newException(HttpRequestError, "Error: " & $res.code & " " & await res.body)
     
-
-
+    # 
     if res.headers.hasKey("x-amz-server-side-encryption-customer-algorithm"):
       result.sseCustomerAlgorithm = some($res.headers["x-amz-server-side-encryption-customer-algorithm"])
     if res.headers.hasKey("ETag"):
       # some reason amazon gives back this with quotes...
+      # so quotes need to be stripped
       result.eTag = some(($res.headers["ETag"]).strip(chars={'"'}))
     if res.headers.hasKey("x-amz-checksum-crc32"):
       result.checksumCRC32 = some($res.headers["x-amz-checksum-crc32"])
@@ -150,9 +150,6 @@ proc uploadPart*(
     if res.headers.hasKey("x-amz-request-charged"):
       result.requestCharged = some($res.headers["x-amz-request-charged"])
   
-    
-
-
 proc main() {.async.} =
   # load .env environment variables
   load()
@@ -168,16 +165,11 @@ proc main() {.async.} =
   let credentials = AwsCredentials(id: accessKey, secret: secretKey)
   var client = newAsyncHttpClient()
 
-  # let fileHandle = open("testFile.bin", fmRead)
-  # let fileSize = fileHandle.getFileSize()
-  # var fileBuffer = newSeq[byte](fileSize)
-  # echo fileHandle.readBytes(fileBuffer, 0, fileBuffer.len)
-  # var body = $(fileBuffer[0..<(1024*1024*5)])
-
-  let fileBuffer = file.readFile()
+  # read the file
   # split the files bigger then 5MB
+  # add the remainder to the last chunk
+  let fileBuffer = file.readFile()
   let minChunkSize = 1024*1024*5
-
   let chunkCount = fileBuffer.len div minChunkSize
   var chunkSizes: seq[int] = @[]
   for i in 0..<chunkCount:
@@ -243,17 +235,17 @@ proc main() {.async.} =
   echo completeMultipartUploadResult.toJson().parseJson().pretty()
 
 when isMainModule:
-  try:
-    waitFor main()
-  except:
-    ## treeform async message fix
-    ## https://github.com/nim-lang/Nim/issues/19931#issuecomment-1167658160
-    let msg = getCurrentExceptionMsg()
-    for line in msg.split("\n"):
-      var line = line.replace("\\", "/")
-      if "/lib/pure/async" in line:
-        continue
-      if "#[" in line:
-        break
-      line.removeSuffix("Iter")
-      echo line
+    try:
+        waitFor main()
+    except:
+        ## treeform async message fix
+        ## https://github.com/nim-lang/Nim/issues/19931#issuecomment-1167658160
+        let msg = getCurrentExceptionMsg()
+        for line in msg.split("\n"):
+            var line = line.replace("\\", "/")
+            if "/lib/pure/async" in line:
+                continue
+            if "#[" in line:
+                break
+            line.removeSuffix("Iter")
+            echo line

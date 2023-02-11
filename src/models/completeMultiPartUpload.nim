@@ -2,13 +2,13 @@ import
     common,
     options
 
-# this file is the tyoe definition for the s3 api taken from the aws docs
-# https://docs.aws.amazon.com/AmazonS3/latest/API/API_CompleteMultipartUpload.html
 
 type
 
     CompletedPart* = object
-
+        ## this file is the type definition for the s3 api was created from the aws docs
+        ## https://docs.aws.amazon.com/AmazonS3/latest/API/API_CompleteMultipartUpload.html
+        ## 
         ## Entity tag of the uploaded part
         eTag*: Option[string]
 

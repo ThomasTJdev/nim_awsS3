@@ -5,12 +5,12 @@ import
 # type
 #     Body = openArray[byte] or openArray[char] or string
 
-# this file is the tyoe definition for the s3 api taken from the aws docs
-# https://docs.aws.amazon.com/AmazonS3/latest/API/API_UploadPart.html
 
 
 
 type
+    ## this file is the type definition for the s3 api was created from the aws docs
+    ## https://docs.aws.amazon.com/AmazonS3/latest/API/API_UploadPart.html
     # UploadPartCommandRequest*[T: seq[byte] or seq[char] or string] = object
     UploadPartCommandRequest* = object
 

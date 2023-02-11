@@ -97,9 +97,7 @@ proc renameHook*(v: object, fieldName: var string) =
             fieldName = tempFieldName
             return
 
-
 suite "utility functions":
-
     test "check amazon time format time":
         let time = parse("2023-02-09T08:24:35.000Z", initTimeFormat "yyyy-MM-dd\'T\'HH:mm:ss\'.\'fff\'Z\'")
         let expectedTime = fromUnix(1675931075).utc() # 2023-02-09T08:24:35.000Z

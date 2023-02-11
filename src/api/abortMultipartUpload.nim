@@ -102,11 +102,11 @@ proc main() {.async.} =
 
     var client = newAsyncHttpClient()
 
-    let args = ListMultipartUploadsRequest(
+    let listMultipartUploadsRequest = ListMultipartUploadsRequest(
         bucket: bucket,
         prefix: some("test")
     )
-    let listMultipartUploadsRes = await client.listMultipartUploads(credentials=credentials, bucket=bucket, region=region, args=args)
+    let listMultipartUploadsRes = await client.listMultipartUploads(credentials=credentials, bucket=bucket, region=region, args=listMultipartUploadsRequest)
 
     if listMultipartUploadsRes.uploads.isNone():
         echo "No uploads found"
@@ -116,7 +116,7 @@ proc main() {.async.} =
     echo uploads.len()
 
     for upload in uploads:
-        let args = AbortMultipartUploadRequest(
+        let abortMultipartUploadRequest = AbortMultipartUploadRequest(
             bucket: bucket,
             key: upload.key,
             uploadId: upload.uploadId.get()
@@ -124,7 +124,7 @@ proc main() {.async.} =
 
         try:
           var abortClient = newAsyncHttpClient()
-          let abortMultipartUploadResult = await abortClient.abortMultipartUpload(credentials=credentials, bucket=bucket, region=region, args=args)
+          let abortMultipartUploadResult = await abortClient.abortMultipartUpload(credentials=credentials, bucket=bucket, region=region, args=abortMultipartUploadRequest)
           echo abortMultipartUploadResult.toJson().parseJson().pretty()
         except:
           echo getCurrentExceptionMsg()

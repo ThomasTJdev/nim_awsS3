@@ -72,12 +72,15 @@ proc getUnescapedString(xmlNode: XmlNode): string =
             else:
                 result.add child.text()
 
-proc xml2Json*(xmlNode: XmlNode, splitAttr: bool=false): JsonNode =
+proc xml2Json*(xmlNode: XmlNode, splitAttr: bool=false, isFrist: bool=true): JsonNode =
     ## Convert an XML node to a JSON node.
     ## if <Element><Element> the resulting json will be JSNull
     ## if <Element>1000</Element> the resulting json will be JSString not JSInt
 
-
+    if isFrist:
+        result = newJObject()
+        result[xmlNode.tag()] = xmlNode.xml2Json(splitAttr, false)
+        return result
     case xmlNode.kind():
     of xnVerbatimText, xnText:
         result = newJString(xmlNode.text)
@@ -87,9 +90,7 @@ proc xml2Json*(xmlNode: XmlNode, splitAttr: bool=false): JsonNode =
             return newJNull()
         if xmlNode.hasEscapedChar():
             result = newJObject()
-            result[xmlNode.tag()] = newJString(xmlNode.getUnescapedString())
-            return result
-
+            return newJString(xmlNode.getUnescapedString())
         result = newJObject()
         # if element has attributes
         if xmlNode.attrsLen() > 0:
@@ -104,16 +105,19 @@ proc xml2Json*(xmlNode: XmlNode, splitAttr: bool=false): JsonNode =
             if child.kind() in {xnText, xnVerbatimText}:
                 result = newJString(child.text)
             elif child.kind() == xnElement:
-                if result.hasKey(child.tag()):
+                if child.hasEscapedChar():
+                    echo child.tag()
+                    result[child.tag()] = newJString(child.getUnescapedString())
+                elif result.hasKey(child.tag()):
                     # assume it is an array
                     if result[child.tag()].kind != JArray:
                         let tempArray = newJArray()
                         tempArray.add(result[child.tag()])
                         result[child.tag()] = tempArray
-                    result[child.tag()].add(child.xml2Json(splitAttr))
+                    result[child.tag()].add(child.xml2Json(splitAttr, false))
                 else:
                     # assume it is an object
-                    result[child.tag()] = child.xml2Json(splitAttr)      
+                    result[child.tag()] = child.xml2Json(splitAttr, false)      
             else:
                 raise newException(ValueError, "kind not implemented: " & $child.kind())
     of xnComment:
@@ -163,12 +167,14 @@ proc xml2Json*(xmlNode: XmlNode, splitAttr: bool=false): JsonNode =
 suite "xml2Json":
 
     type
-        Xml2JsonTest = object
+        Xml2JsonTestRoot = object
             id: string
             child1: string
             child2: seq[string]
             child3: Table[string, string]
             child5: string
+        Xml2JsonTest = object
+            root: Xml2JsonTestRoot
 
     let xmlString = """<?xml version="1.0" encoding="UTF-8"?>
 <root id="123">
@@ -181,8 +187,8 @@ suite "xml2Json":
     <Child5>value5</Child5>
 </root>"""
 
-    let expectedJson = """{"id":"123","child1":"value1","child2":["value2","value3"],"child3":{"child4":"value4"},"Child5":"value5"}"""
-    let expectedJsonSplitAttr = """{"attributes":{"id":"123"},"child1":"value1","child2":["value2","value3"],"child3":{"child4":"value4"},"Child5":"value5"}"""
+    let expectedJson = """{"root":{"id":"123","child1":"value1","child2":["value2","value3"],"child3":{"child4":"value4"},"Child5":"value5"}}"""
+    let expectedJsonSplitAttr = """{"root":{"attributes":{"id":"123"},"child1":"value1","child2":["value2","value3"],"child3":{"child4":"value4"},"Child5":"value5"}}"""
     test "xml->jsonString":
         let xml = xmlString.parseXml()
         check:
@@ -196,11 +202,13 @@ suite "xml2Json":
         let jsonString = json.toJson()
         let obj = jsonString.fromJson(Xml2JsonTest)
         let expectedObject = Xml2JsonTest(
-            id: "123",
-            child1: "value1",
-            child2: @["value2", "value3"],
-            child3: {"child4": "value4"}.toTable(),
-            child5: "value5"
+            root: Xml2JsonTestRoot(
+                id: "123",
+                child1: "value1",
+                child2: @["value2", "value3"],
+                child3: {"child4": "value4"}.toTable(),
+                child5: "value5"
+            )
         )
         check:
 
@@ -214,5 +222,25 @@ suite "xml2Json":
     test "xml quotes":
         let xmlString = """ <?xml version="1.0" encoding="UTF-8"?><ETag>&quot;48ad599540f59071982d4a00c6c5928d-4&quot;</ETag>"""
         let  expectedJson = """{"ETag":"48ad599540f59071982d4a00c6c5928d-4"}"""
+        let xmlString1 = """ <?xml version="1.0" encoding="UTF-8"?><root><ETag>&quot;48ad599540f59071982d4a00c6c5928d-4&quot;</ETag></root>"""
+        let  expectedJson1 = """{"root":{"ETag":"48ad599540f59071982d4a00c6c5928d-4"}}"""
+        var n0 = newElement("ETag")
+        let n1 = newText("\"")
+        let n2 = newText("48ad599540f59071982d4a00c6c5928d-4")
+        n0.add(n1)
+        n0.add(n2)
+        n0.add(n1)
+        # echo n0.items().toSeq()
+        # echo n0.hasEscapedChar()
+        # echo $n0
+        let root = newElement("root")
+        root.add(n0)
+
         check:
-            xmlString.parseXml().xml2Json().toJson() == expectedJson
+            n0.xml2Json().toJson() == expectedJson
+            root.xml2Json().toJson() == expectedJson1
+
+    test "jsony object":
+        let json = """{"Xml2JsonTestRoot":{"id":"123","child1":"value1","child2":["value2","value3"],"child3":{"child4":"value4"},"Child5":"value5"}}"""
+        let obj = json.parseJson()["Xml2JsonTestRoot"].toJson().fromJson(Xml2JsonTestRoot)
+        echo obj

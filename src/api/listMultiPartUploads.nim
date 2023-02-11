@@ -4,6 +4,7 @@ import
     httpclient,
     asyncdispatch,
     strutils,
+    sequtils,
     strformat,
     options,
     xmlparser,
@@ -187,7 +188,8 @@ proc listMultipartUploads*(
 
     let xml = body.parseXML()
     let json = xml.xml2Json()
-    let jsonStr = json.toJson()
+    let jsonStr = json["ListMultipartUploadsResult"].toJson()
+    echo "\n> jsonStr: "
     echo jsonStr
     let obj = jsonStr.fromJson(ListMultipartUploadsResult)
 

@@ -102,7 +102,7 @@ type
         ## The algorithm used check the integrity of the object during the transfer.
         checksumAlgorithm*: Option[ChecksumAlgorithm]
 
-    CreateMultipartUploadResult* = object
+    InitiateMultipartUploadResult* = object
         
         ## specified abort date for incomplete multipart uploads
         ## https://docs.aws.amazon.com/AmazonS3/latest/dev/mpuoverview.html#mpu-abort-incomplete-mpu-lifecycle-config

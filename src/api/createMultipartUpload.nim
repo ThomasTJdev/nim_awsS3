@@ -27,7 +27,7 @@ proc createMultipartUpload*(
       region: string,
       service="s3",
       args: CreateMultipartUploadRequest
-    ): Future[CreateMultipartUploadResult] {.async.}  =
+    ): Future[InitiateMultipartUploadResult] {.async.}  =
     ## https://docs.aws.amazon.com/AmazonS3/latest/API/API_CreateMultipartUpload.html
 
     # example request
@@ -157,9 +157,9 @@ proc createMultipartUpload*(
 
     let xml = body.parseXML()
     let json = xml.xml2Json()
-    let jsonStr = json.toJson()
+    let jsonStr = json["InitiateMultipartUploadResult"].toJson()
     echo jsonStr
-    let obj = jsonStr.fromJson(CreateMultipartUploadResult)
+    let obj = jsonStr.fromJson(InitiateMultipartUploadResult)
 
     when defined(dev):
         echo "\n> xml: ", xml

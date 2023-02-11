@@ -12,6 +12,25 @@ import
     jsony
 
 
+import jsony, options
+
+proc parseHook*[T](s: string, i: var int, v: var Option[seq[T]]) =
+    eatSpace(s, i)
+    if i + 3 < s.len and
+            s[i+0] == 'n' and
+            s[i+1] == 'u' and
+            s[i+2] == 'l' and
+            s[i+3] == 'l':
+        i += 4
+        return
+    if s[i] == '[':
+        var v2: seq[T]
+        parseHook(s, i, v2)
+        v = some(v2)
+    else:
+        var v2: T
+        parseHook(s, i, v2)
+        v = some(@[v2])
 
 
 proc dumpHook*(s: var string, v: Option[DateTime]) =
@@ -52,7 +71,6 @@ proc parseHook*(s: string, i: var int, v: var Option[bool]) =
     parseHook(s, i, str)
     v = some(parseBool(str))
 
-    
 proc renameHook*(v: object, fieldName: var string) =
     # loosely match field  to names
     # MyField -> myfield
@@ -208,5 +226,21 @@ suite "utility functions":
             myObject == expectedObject
 
     test "parse time":
-
         let expectedTime = parse("2023-02-09T08:24:35.000Z", initTimeFormat "yyyy-MM-dd\'T\'HH:mm:ss\'.\'fff\'Z\'")
+
+    test "jsony loose object/arr":
+        type
+            Cat = object
+                name: string
+            MyType = object
+                cat: Option[seq[Cat]]
+
+        let
+            d1 = """{"cat":[{"name":"sparky"}]}"""
+            d2 = """{"cat":{"name":"sparky"}}"""
+            d3 = """{"cat":null}"""
+            
+        check:
+            d1.fromJson(MyType) == MyType(cat: some(@[Cat(name: "sparky")]))
+            d2.fromJson(MyType) == MyType(cat: some(@[Cat(name: "sparky")]))
+            d3.fromJson(MyType) == MyType()

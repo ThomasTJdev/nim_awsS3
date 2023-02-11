@@ -162,7 +162,8 @@ proc main() {.async.} =
       secretKey = os.getEnv("AWS_SECRET_ACCESS_KEY")
       region = "eu-west-2"
       bucket = "nim-aws-s3-multipart-upload"
-      key    = "testFile.bin"
+      file    = "testFile.bin"
+      key    = "testFile1.bin"
 
   let credentials = AwsCredentials(id: accessKey, secret: secretKey)
   var client = newAsyncHttpClient()
@@ -173,7 +174,7 @@ proc main() {.async.} =
   # echo fileHandle.readBytes(fileBuffer, 0, fileBuffer.len)
   # var body = $(fileBuffer[0..<(1024*1024*5)])
 
-  let fileBuffer = key.readFile()
+  let fileBuffer = file.readFile()
   # split the files bigger then 5MB
   let minChunkSize = 1024*1024*5
 

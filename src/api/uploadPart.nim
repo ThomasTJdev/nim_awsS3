@@ -168,7 +168,7 @@ proc main() {.async.} =
         region = "eu-west-2"
         bucket = "nim-aws-s3-multipart-upload"
         file = "testFile.bin"
-        key = "testFile1.bin"
+        key = "testFile.bin"
 
     let credentials = AwsCreds(AWS_ACCESS_KEY_ID: accessKey, AWS_SECRET_ACCESS_KEY: secretKey)
     var client = newAsyncHttpClient()

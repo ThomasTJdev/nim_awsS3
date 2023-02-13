@@ -25,10 +25,11 @@ import
     nimSHA2
 
 import
+    abortMultipartUpload,
     createMultipartUpload,
     completeMultipartUpload,
     listMultipartUploads,
-    abortMultipartUpload
+    listParts
 
 from awsSTS import AwsCreds
 
@@ -249,6 +250,17 @@ proc main() {.async.} =
 
         if completedMultipartUpload.parts.isNone:
             raise newException(ValueError, "parts is None, please initialize it")
+        
+        # list the parts before completing
+        let listPartsResquest = ListPartsRequest(
+            bucket: bucket,
+            key: some(key),
+            uploadId: some(createMultiPartUploadResult.uploadId)
+        )
+        let listPartsResult = await client.listParts(credentials=credentials, bucket=bucket, region=region, args=listPartsResquest)
+        # echo result
+        echo listPartsResult.toJson().parseJson().pretty()
+
 
         let completedPart = CompletedPart(
             eTag: res.eTag,

@@ -1,8 +1,6 @@
 import 
     options,
-    times,
-    common
-
+    times
 
 type
     ## this file is the type definition for the s3 api was created from the aws docs

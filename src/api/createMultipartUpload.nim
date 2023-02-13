@@ -18,10 +18,11 @@ import
     dotenv,
     utils
 
+from awsSTS import AwsCreds
 
 proc createMultipartUpload*(
       client: AsyncHttpClient,
-      credentials: AwsCredentials,
+      credentials: AwsCreds,
       headers: HttpHeaders = newHttpHeaders(),
       bucket: string,
       region: string,
@@ -201,7 +202,7 @@ proc main() {.async.} =
         bucket = "nim-aws-s3-multipart-upload"
         key    = "testFile.bin"
 
-    let credentials = AwsCredentials(id: accessKey, secret: secretKey)
+    let credentials = AwsCreds(AWS_ACCESS_KEY_ID: accessKey, AWS_SECRET_ACCESS_KEY: secretKey)
 
     var client = newAsyncHttpClient()
 

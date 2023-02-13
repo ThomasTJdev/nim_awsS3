@@ -16,10 +16,12 @@ import
     nimSHA2,
     hmac
 
+from awsSTS import AwsCreds
+
 type
-  AwsCredentials* = object
-    id*: string
-    secret*: string
+  # AwsCredentials* = object
+  #   id*: string
+  #   secret*: string
 
   AwsScope* = object
     date*: DateTime
@@ -64,7 +66,7 @@ proc createCanonicalPath(path: string): string =
   return uriEncode(path, {'/'})
 
 proc createCanonicalQueryString(queryString: string): string =
-  var queryParts = queryString.split("&").map(x => x.split("=")).map(x => (x[0], x[1]))
+  var queryParts = queryString.split("&").filter(x => x != "").map(x => x.split("=")).map(x => (x[0], x[1]))
   if queryParts.len == 0:
     return ""
   
@@ -212,7 +214,7 @@ proc createAuthorizationHeader*(
   return &"{algorithm} Credential={credential}, SignedHeaders={signedHeaders}, Signature={signature}"
 
 proc createAuthorizedCanonicalRequest*(
-    credentials: AwsCredentials,
+    credentials: AwsCreds,
     httpMethod: HttpMethod,
     url: string,
     payload: seq[byte] | seq[char] | string,
@@ -248,12 +250,12 @@ proc createAuthorizedCanonicalRequest*(
   )
   # create signature
   let 
-    signingKey = signingKey(credentials.secret, scope, termination)
+    signingKey = signingKey(credentials.AWS_SECRET_ACCESS_KEY, scope, termination)
     sig = createSignature(signingKey, to_sign)
 
   # create authorization header
   let authorization = createAuthorizationHeader(
-    credentials.id,
+    credentials.AWS_ACCESS_KEY_ID,
     scope,
     canonicalRequestResult.canonicalHeaders.signedHeaders,
     sig,
@@ -265,7 +267,7 @@ proc createAuthorizedCanonicalRequest*(
 
 proc request*(
     client: AsyncHttpClient,
-    credentials: AwsCredentials,
+    credentials: AwsCreds,
     httpMethod: HttpMethod,
     headers: HttpHeaders = newHttpHeaders(),
     url: string,
@@ -314,7 +316,7 @@ proc main() {.async.} =
   # this is just a scoped testing function
   proc listMultipartUpload(
     client: AsyncHttpClient,
-    credentials: AwsCredentials,
+    credentials: AwsCreds,
     bucket: string,
     region: string
   ): Future[string] {.async.} =
@@ -336,7 +338,7 @@ proc main() {.async.} =
     region = "eu-west-2"
     bucket = "nim-aws-s3-multipart-upload"
 
-  let creds = AwsCredentials(id: accessKey, secret: secretKey)
+  let creds = AwsCreds(AWS_ACCESS_KEY_ID: accessKey, AWS_SECRET_ACCESS_KEY: secretKey)
 
   var client = newAsyncHttpClient()
   echo await client.listMultipartUpload(creds, bucket, region)

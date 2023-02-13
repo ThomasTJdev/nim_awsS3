@@ -1,12 +1,14 @@
 import
     options,
     common,
+    times,
     part
 
 
 type
     ## this file is the type definition for the s3 api was created from the aws docs
-    ## https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListMultipartUploads.html
+    ## https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListParts.html
+
     ListPartsRequest* = object
         ## The bucket name of the uploaded the part.
         ## bucket
@@ -35,7 +37,7 @@ type
 
     ListPartsResult* = object
 
-        abortDate*: Option[string]
+        abortDate*: Option[DateTime]
 
         abortRuleId*: Option[string]
 
@@ -47,7 +49,7 @@ type
 
         checkSumAlgorithm: Option[CheckSumAlgorithm]
 
-        initiator*: string
+        initiator*: Initiator
 
         isTruncated*: Option[bool]
 
@@ -57,7 +59,7 @@ type
 
         nextPartNumberMarker*: Option[int]
 
-        owner*: string
+        owner*: Owner
 
         parts: Option[seq[Part]]
 

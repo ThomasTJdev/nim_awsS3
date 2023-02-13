@@ -30,11 +30,12 @@ import
     listMultipartUploads,
     abortMultipartUpload
 
+from awsSTS import AwsCreds
 
 proc uploadPart*(
 # proc uploadPart*[T](
         client: AsyncHttpClient,
-        credentials: AwsCredentials,
+        credentials: AwsCreds,
         headers: HttpHeaders = newHttpHeaders(),
         bucket: string,
         region: string,
@@ -168,7 +169,7 @@ proc main() {.async.} =
         file = "testFile.bin"
         key = "testFile1.bin"
 
-    let credentials = AwsCredentials(id: accessKey, secret: secretKey)
+    let credentials = AwsCreds(AWS_ACCESS_KEY_ID: accessKey, AWS_SECRET_ACCESS_KEY: secretKey)
     var client = newAsyncHttpClient()
 
 
@@ -178,26 +179,23 @@ proc main() {.async.} =
     )
     let listMultipartUploadsRes = await client.listMultipartUploads(credentials=credentials, bucket=bucket, region=region, args=listMultipartUploadsRequest)
 
-    if listMultipartUploadsRes.uploads.isNone():
-        echo "No uploads found"
-        return
+    if listMultipartUploadsRes.uploads.isSome():
+        var uploads = listMultipartUploadsRes.uploads.get()
+        echo uploads.len()
 
-    var uploads = listMultipartUploadsRes.uploads.get()
-    echo uploads.len()
+        for upload in uploads:
+            let abortMultipartUploadRequest = AbortMultipartUploadRequest(
+            bucket: bucket,
+            key: upload.key,
+            uploadId: upload.uploadId.get()
+            )
 
-    for upload in uploads:
-        let abortMultipartUploadRequest = AbortMultipartUploadRequest(
-        bucket: bucket,
-        key: upload.key,
-        uploadId: upload.uploadId.get()
-        )
-
-        try:
-            var abortClient = newAsyncHttpClient()
-            let abortMultipartUploadResult = await abortClient.abortMultipartUpload(credentials=credentials, bucket=bucket, region=region, args=abortMultipartUploadRequest)
-            echo abortMultipartUploadResult.toJson().parseJson().pretty()
-        except:
-            echo getCurrentExceptionMsg()
+            try:
+                var abortClient = newAsyncHttpClient()
+                let abortMultipartUploadResult = await abortClient.abortMultipartUpload(credentials=credentials, bucket=bucket, region=region, args=abortMultipartUploadRequest)
+                echo abortMultipartUploadResult.toJson().parseJson().pretty()
+            except:
+                echo getCurrentExceptionMsg()
 
     # read the file
     # split the files bigger then 5MB
@@ -222,8 +220,11 @@ proc main() {.async.} =
         parts: some(newSeq[CompletedPart]())
     )
     let createMultiPartUploadResult = await client.createMultipartUpload(
-            credentials = credentials, bucket = bucket,
-            region = region, args = createMultiPartUploadRequest)
+            credentials = credentials,
+            bucket = bucket,
+            region = region,
+            args = createMultiPartUploadRequest
+        )
     # upload the part
     for i in 0..chunkSizes.high:
         let partNumber = i+1

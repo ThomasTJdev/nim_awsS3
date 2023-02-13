@@ -18,17 +18,18 @@ import
     dotenv,
     utils
 
+from awsSTS import AwsCreds
 
 proc listParts*(
         client: AsyncHttpClient,
-        credentials: AwsCredentials,
+        credentials: AwsCreds,
         headers: HttpHeaders = newHttpHeaders(),
         bucket: string,
         region: string,
         service="s3",
         args: ListPartsRequest
     ): Future[ListPartsResult] {.async.} =
-    ## List Multipart Uploads
+    ## List Part Uploads
     ## https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListParts.html
     ## This operation lists in-progress multipart uploads. An in-progress multipart upload is a multipart upload that has been initiated using the Initiate Multipart Upload request, but has not yet been completed or aborted.
 
@@ -79,23 +80,33 @@ proc listParts*(
     #    <ChecksumAlgorithm>string</ChecksumAlgorithm>
     # </ListPartsResult>
    
-    if args.requestPayer.isSome():
-        headers["x-amz-request-payer"] = args.requestPayer.get()
-    if args.expectedBucketOwner.isSome():
-        headers["x-amz-expected-bucket-owner"] = args.expectedBucketOwner.get()
-    if args.sseCustomerAlgorithm.isSome():
-        headers["x-amz-server-side-encryption-customer-algorithm"] = args.sseCustomerAlgorithm.get()
-    if args.sseCustomerKey.isSome():
-        headers["x-amz-server-side-encryption-customer-key"] = args.sseCustomerKey.get()
-    if args.sseCustomerKeyMD5.isSome():
-        headers["x-amz-server-side-encryption-customer-key-MD5"] = args.sseCustomerKeyMD5.get()
-    
     # GET /Key+?max-parts=MaxParts&part-number-marker=PartNumberMarker&uploadId=UploadId HTTP/1.1
 
     let httpMethod = HttpGet
     let endpoint = &"htts://{bucket}.{service}.{region}.amazonaws.com"
-    var url = &"{endpoint}/{args.key}?uploadId={args.uploadId}"
+    var url = ""
+    if args.key.isSome():
+        url = &"{endpoint}/" & args.key.get() & "?"
+    else:
+        url = &"{endpoint}/?"
 
+
+    # add headers
+    if args.requestPayer.isSome():
+        headers["x-amz-request-payer"] = $args.requestPayer.get()
+    if args.expectedBucketOwner.isSome():
+        headers["x-amz-expected-bucket-owner"] = $args.expectedBucketOwner.get()
+    if args.sseCustomerAlgorithm.isSome():
+        headers["x-amz-server-side-encryption-customer-algorithm"] = $args.sseCustomerAlgorithm.get()
+    if args.sseCustomerKey.isSome():
+        headers["x-amz-server-side-encryption-customer-key"] = $args.sseCustomerKey.get()
+    if args.sseCustomerKeyMD5.isSome():
+        headers["x-amz-server-side-encryption-customer-key-MD5"] = $args.sseCustomerKeyMD5.get()
+
+    # add query params
+
+    if args.uploadId.isSome():
+        url = url & "&uploadId=" & args.uploadId.get()
     if args.maxParts.isSome():
         url = url & "&max-parts=" & $args.maxParts.get()
     if args.partNumberMarker.isSome():
@@ -121,7 +132,7 @@ proc listParts*(
 
     let xml = body.parseXML()
     let json = xml.xml2Json()
-    let jsonStr = json.toJson()
+    let jsonStr = json["ListPartsResult"].toJson()
     echo jsonStr
     let obj = jsonStr.fromJson(ListPartsResult)
 
@@ -148,23 +159,26 @@ proc main() {.async.} =
     load()
     # this is just a scoped testing function
     let
-        accessKey = os.getEnv("AWS_ACCESS_KEY_ID")
-        secretKey = os.getEnv("AWS_SECRET_ACCESS_KEY")
-        region = "eu-west-2"
-        bucket = "nim-aws-s3-multipart-upload"
+        accessKey   = os.getEnv("AWS_ACCESS_KEY_ID")
+        secretKey   = os.getEnv("AWS_SECRET_ACCESS_KEY")
+        region      = "eu-west-2"
+        bucket      = "nim-aws-s3-multipart-upload"
+        key         = "testFile1.bin"
+        uploadId    = "G9St9EQShiehKsLSdNz.KcnTQiNYoQzx91OfcEi.PpAr6U3KKTCzCvuGFLAlVMbuDIAovCEUKqM55qTLl73TYoBELhzFjo.aAtbvGLy2z6ClnkKmm4dQNGx_14p.Ztho"
 
-    let credentials = AwsCredentials(id: accessKey, secret: secretKey)
+    let credentials = AwsCreds(AWS_ACCESS_KEY_ID: accessKey, AWS_SECRET_ACCESS_KEY: secretKey)
 
     var client = newAsyncHttpClient()
 
     let args = ListPartsRequest(
         bucket: bucket,
-        prefix: some("test")
+        key: some(key),
+        uploadId: some(uploadId)
     )
     let result = await client.listParts(credentials=credentials, bucket=bucket, region=region, args=args)
-
     # echo result
-
+    echo result.toJson().parseJson().pretty()
+    
 
 when isMainModule:
     try:

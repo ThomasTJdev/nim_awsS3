@@ -364,9 +364,8 @@ The upload part in ```src/api/uploadPart.nim``` contains a full example of
 - abortMultipartUpload
 - listMultipartUpload
 - listParts
-- completeMulipartUpload
-- creataeMultipartUpload
-
+- completeMultipartUpload
+- createMultipartUpload
 ____
 
 ## abordMultipartUpload

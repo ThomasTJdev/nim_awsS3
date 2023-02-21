@@ -165,8 +165,8 @@ proc main() {.async.} =
     let
         accessKey = os.getEnv("AWS_ACCESS_KEY_ID")
         secretKey = os.getEnv("AWS_SECRET_ACCESS_KEY")
-        region = "eu-west-2"
-        bucket = "nim-aws-s3-multipart-upload"
+        region = os.getEnv("AWS_REGION")
+        bucket = os.getEnv("AWS_BUCKET")
         file = "testFile.bin"
         key = "testFile.bin"
 

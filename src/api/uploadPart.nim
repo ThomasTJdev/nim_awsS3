@@ -258,7 +258,7 @@ proc main() {.async.} =
             uploadId: some(createMultiPartUploadResult.uploadId)
         )
         let listPartsResult = await client.listParts(credentials=credentials, bucket=bucket, region=region, args=listPartsResquest)
-        # echo result
+        echo "\n> listPartsResult"
         echo listPartsResult.toJson().parseJson().pretty()
 
 
@@ -285,6 +285,7 @@ proc main() {.async.} =
     let completeMultipartUploadResult = await client.completeMultipartUpload(
             credentials = credentials, bucket = bucket,
             region = region, args = completeMultipartUploadRequest)
+    echo "\n> completeMultipartUpload"
     echo completeMultipartUploadResult.toJson().parseJson().pretty()
 
 when isMainModule:

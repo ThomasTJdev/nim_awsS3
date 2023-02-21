@@ -1,10 +1,10 @@
-import 
+import
     unittest,
     strutils,
     options,
     times
 
-import 
+import
     jsony
 
 proc parseHook*[T](s: string, i: var int, v: var Option[seq[T]]) =
@@ -141,7 +141,7 @@ suite "utility functions":
             d1 = """{"cat":[{"name":"sparky"}]}"""
             d2 = """{"cat":{"name":"sparky"}}"""
             d3 = """{"cat":null}"""
-            
+
         check:
             d1.fromJson(MyType) == MyType(cat: some(@[Cat(name: "sparky")]))
             d2.fromJson(MyType) == MyType(cat: some(@[Cat(name: "sparky")]))

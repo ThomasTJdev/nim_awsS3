@@ -86,29 +86,29 @@ proc uploadPart*(
     var url = &"{endpoint}/{args.key}?partNumber={args.partNumber}&uploadId={args.uploadId}"
 
     if args.contentLength.isSome():
-        headers["Content-Length"] = $args.contentLength.get()
+      headers["Content-Length"] = $args.contentLength.get()
     if args.contentMD5.isSome():
-        headers["Content-MD5"] = args.contentMD5.get()
+      headers["Content-MD5"] = args.contentMD5.get()
     if args.checksumAlgorithm.isSome():
-        headers["x-amz-sdk-checksum-algorithm"] = $args.checksumAlgorithm.get()
+      headers["x-amz-sdk-checksum-algorithm"] = $args.checksumAlgorithm.get()
     if args.checksumCRC32.isSome():
-        headers["x-amz-checksum-crc32"] = args.checksumCRC32.get()
+      headers["x-amz-checksum-crc32"] = args.checksumCRC32.get()
     if args.checksumCRC32C.isSome():
-        headers["x-amz-checksum-crc32c"] = args.checksumCRC32C.get()
+      headers["x-amz-checksum-crc32c"] = args.checksumCRC32C.get()
     if args.checksumSHA1.isSome():
-        headers["x-amz-checksum-sha1"] = args.checksumSHA1.get()
+      headers["x-amz-checksum-sha1"] = args.checksumSHA1.get()
     if args.checksumSHA256.isSome():
-        headers["x-amz-checksum-sha256"] = args.checksumSHA256.get()
+      headers["x-amz-checksum-sha256"] = args.checksumSHA256.get()
     if args.sseCustomerAlgorithm.isSome():
-        headers["x-amz-server-side-encryption-customer-algorithm"] = args.sseCustomerAlgorithm.get()
+      headers["x-amz-server-side-encryption-customer-algorithm"] = args.sseCustomerAlgorithm.get()
     if args.sseCustomerKey.isSome():
-        headers["x-amz-server-side-encryption-customer-key"] = args.sseCustomerKey.get()
+      headers["x-amz-server-side-encryption-customer-key"] = args.sseCustomerKey.get()
     if args.sseCustomerKeyMD5.isSome():
-        headers["x-amz-server-side-encryption-customer-key-MD5"] = args.sseCustomerKeyMD5.get()
+      headers["x-amz-server-side-encryption-customer-key-MD5"] = args.sseCustomerKeyMD5.get()
     if args.requestPayer.isSome():
-        headers["x-amz-request-payer"] = args.requestPayer.get()
+      headers["x-amz-request-payer"] = args.requestPayer.get()
     if args.expectedBucketOwner.isSome():
-        headers["x-amz-expected-bucket-owner"] = args.expectedBucketOwner.get()
+      headers["x-amz-expected-bucket-owner"] = args.expectedBucketOwner.get()
 
     let res = await client.request(credentials = credentials,
             headers = headers, httpMethod = httpMethod, url = url,
@@ -116,47 +116,47 @@ proc uploadPart*(
     let body = await res.body
 
     when defined(dev):
-        echo "\n< uploadPart.url"
-        echo url
-        echo "\n< uploadPart.method"
-        echo httpMethod
-        echo "\n< uploadPart.code"
-        echo res.code
-        echo "\n< uploadPart.headers"
-        echo res.headers
-        echo "\n< uploadPart.body"
-        echo body
+      echo "\n< uploadPart.url"
+      echo url
+      echo "\n< uploadPart.method"
+      echo httpMethod
+      echo "\n< uploadPart.code"
+      echo res.code
+      echo "\n< uploadPart.headers"
+      echo res.headers
+      echo "\n< uploadPart.body"
+      echo body
 
     if res.code != Http200:
-        raise newException(HttpRequestError, "Error: " & $res.code &
+      raise newException(HttpRequestError, "Error: " & $res.code &
                 " " & await res.body)
 
     #
     if res.headers.hasKey("x-amz-server-side-encryption-customer-algorithm"):
-        result.sseCustomerAlgorithm = some($res.headers["x-amz-server-side-encryption-customer-algorithm"])
+      result.sseCustomerAlgorithm = some($res.headers["x-amz-server-side-encryption-customer-algorithm"])
     if res.headers.hasKey("ETag"):
-        # some reason amazon gives back this with quotes...
-        # so quotes need to be stripped
-        result.eTag = some(($res.headers["ETag"]).strip(chars = {'"'}))
+      # some reason amazon gives back this with quotes...
+      # so quotes need to be stripped
+      result.eTag = some(($res.headers["ETag"]).strip(chars = {'"'}))
     if res.headers.hasKey("x-amz-checksum-crc32"):
-        result.checksumCRC32 = some($res.headers["x-amz-checksum-crc32"])
+      result.checksumCRC32 = some($res.headers["x-amz-checksum-crc32"])
     if res.headers.hasKey("x-amz-checksum-crc32c"):
-        result.checksumCRC32C = some($res.headers["x-amz-checksum-crc32c"])
+      result.checksumCRC32C = some($res.headers["x-amz-checksum-crc32c"])
     if res.headers.hasKey("x-amz-checksum-sha1"):
-        result.checksumSHA1 = some($res.headers["x-amz-checksum-sha1"])
+      result.checksumSHA1 = some($res.headers["x-amz-checksum-sha1"])
     if res.headers.hasKey("x-amz-checksum-sha256"):
-        result.checksumSHA256 = some($res.headers["x-amz-checksum-sha256"])
+      result.checksumSHA256 = some($res.headers["x-amz-checksum-sha256"])
     if res.headers.hasKey("x-amz-server-side-encryption-customer-algorithm"):
-        result.sseCustomerAlgorithm = some($res.headers["x-amz-server-side-encryption-customer-algorithm"])
+      result.sseCustomerAlgorithm = some($res.headers["x-amz-server-side-encryption-customer-algorithm"])
     if res.headers.hasKey("x-amz-server-side-encryption-customer-key-MD5"):
-        result.sseCustomerKeyMD5 = some($res.headers["x-amz-server-side-encryption-customer-key-MD5"])
+      result.sseCustomerKeyMD5 = some($res.headers["x-amz-server-side-encryption-customer-key-MD5"])
     if res.headers.hasKey("x-amz-server-side-encryption-aws-kms-key-id"):
-        result.sseKMSKeyId = some($res.headers["x-amz-server-side-encryption-aws-kms-key-id"])
+      result.sseKMSKeyId = some($res.headers["x-amz-server-side-encryption-aws-kms-key-id"])
     if res.headers.hasKey("x-amz-server-side-encryption-bucket-key-enabled"):
-        result.bucketKeyEnabled = some(parseBool(res.headers[
+      result.bucketKeyEnabled = some(parseBool(res.headers[
                 "x-amz-server-side-encryption-bucket-key-enabled"]))
     if res.headers.hasKey("x-amz-request-charged"):
-        result.requestCharged = some($res.headers["x-amz-request-charged"])
+      result.requestCharged = some($res.headers["x-amz-request-charged"])
 
 proc main() {.async.} =
     # load .env environment variables
@@ -250,7 +250,7 @@ proc main() {.async.} =
 
         if completedMultipartUpload.parts.isNone:
             raise newException(ValueError, "parts is None, please initialize it")
-        
+
         # list the parts before completing
         let listPartsResquest = ListPartsRequest(
             bucket: bucket,

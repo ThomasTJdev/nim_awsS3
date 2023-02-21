@@ -1,4 +1,4 @@
-import 
+import
     os,
     httpclient,
     asyncdispatch,
@@ -79,53 +79,53 @@ proc listParts*(
     #    <StorageClass>string</StorageClass>
     #    <ChecksumAlgorithm>string</ChecksumAlgorithm>
     # </ListPartsResult>
-   
+
     # GET /Key+?max-parts=MaxParts&part-number-marker=PartNumberMarker&uploadId=UploadId HTTP/1.1
 
     let httpMethod = HttpGet
     let endpoint = &"htts://{bucket}.{service}.{region}.amazonaws.com"
     var url = ""
     if args.key.isSome():
-        url = &"{endpoint}/" & args.key.get() & "?"
+      url = &"{endpoint}/" & args.key.get() & "?"
     else:
-        url = &"{endpoint}/?"
+      url = &"{endpoint}/?"
 
 
     # add headers
     if args.requestPayer.isSome():
-        headers["x-amz-request-payer"] = $args.requestPayer.get()
+      headers["x-amz-request-payer"] = $args.requestPayer.get()
     if args.expectedBucketOwner.isSome():
-        headers["x-amz-expected-bucket-owner"] = $args.expectedBucketOwner.get()
+      headers["x-amz-expected-bucket-owner"] = $args.expectedBucketOwner.get()
     if args.sseCustomerAlgorithm.isSome():
-        headers["x-amz-server-side-encryption-customer-algorithm"] = $args.sseCustomerAlgorithm.get()
+      headers["x-amz-server-side-encryption-customer-algorithm"] = $args.sseCustomerAlgorithm.get()
     if args.sseCustomerKey.isSome():
-        headers["x-amz-server-side-encryption-customer-key"] = $args.sseCustomerKey.get()
+      headers["x-amz-server-side-encryption-customer-key"] = $args.sseCustomerKey.get()
     if args.sseCustomerKeyMD5.isSome():
-        headers["x-amz-server-side-encryption-customer-key-MD5"] = $args.sseCustomerKeyMD5.get()
+      headers["x-amz-server-side-encryption-customer-key-MD5"] = $args.sseCustomerKeyMD5.get()
 
     # add query params
 
     if args.uploadId.isSome():
-        url = url & "&uploadId=" & args.uploadId.get()
+      url = url & "&uploadId=" & args.uploadId.get()
     if args.maxParts.isSome():
-        url = url & "&max-parts=" & $args.maxParts.get()
+      url = url & "&max-parts=" & $args.maxParts.get()
     if args.partNumberMarker.isSome():
-        url = url & "&part-number-marker=" & $args.partNumberMarker.get()
-    
+      url = url & "&part-number-marker=" & $args.partNumberMarker.get()
+
     let res = await client.request(credentials=credentials, headers=headers, httpMethod=httpMethod, url=url, region=region, service=service, payload="")
     let body = await res.body
 
     when defined(dev):
-        echo "\n< listMultipartUploads.url"
-        echo url
-        echo "\n< listMultipartUploads.method"
-        echo httpMethod
-        echo "\n< listMultipartUploads.code"
-        echo res.code
-        echo "\n< listMultipartUploads.headers"
-        echo res.headers
-        echo "\n< listMultipartUploads.body"
-        echo body
+      echo "\n< listMultipartUploads.url"
+      echo url
+      echo "\n< listMultipartUploads.method"
+      echo httpMethod
+      echo "\n< listMultipartUploads.code"
+      echo res.code
+      echo "\n< listMultipartUploads.headers"
+      echo res.headers
+      echo "\n< listMultipartUploads.body"
+      echo body
 
     if res.code != Http200:
         raise newException(HttpRequestError, "Error: " & $res.code & " " & await res.body)
@@ -133,24 +133,25 @@ proc listParts*(
     let xml = body.parseXML()
     let json = xml.xml2Json()
     let jsonStr = json["ListPartsResult"].toJson()
-    echo jsonStr
+    when defined(dev):
+      echo jsonStr
     let obj = jsonStr.fromJson(ListPartsResult)
 
     when defined(dev):
-        echo "\n> xml: ", xml
-        echo "\n> jsonStr: ", jsonStr
-        # echo obj
-        # echo "\n> obj string: ", obj.toJson().parseJson().pretty()
+      echo "\n> xml: ", xml
+      echo "\n> jsonStr: ", jsonStr
+      # echo obj
+      # echo "\n> obj string: ", obj.toJson().parseJson().pretty()
     result = obj
 
     if res.headers.hasKey("x-amz-abort-date"):
       result.abortDate = some(parse($res.headers["x-amz-abort-date"], "ddd',' dd MMM yyyy HH:mm:ss 'GMT'"))
     if res.headers.hasKey("x-amz-abort-rule-id"):
-        result.abortRuleId = some($res.headers["x-amz-abort-rule-id"])
+      result.abortRuleId = some($res.headers["x-amz-abort-rule-id"])
     if res.headers.hasKey("x-amz-request-charged"):
-        result.requestCharged = some($res.headers["x-amz-request-charged"])
-    
-    
+      result.requestCharged = some($res.headers["x-amz-request-charged"])
+
+
 
 
 
@@ -178,7 +179,7 @@ proc main() {.async.} =
     let result = await client.listParts(credentials=credentials, bucket=bucket, region=region, args=args)
     # echo result
     echo result.toJson().parseJson().pretty()
-    
+
 
 when isMainModule:
     try:

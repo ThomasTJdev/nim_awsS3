@@ -1,4 +1,4 @@
-import 
+import
     common,
     listMultipartUploads,
     listParts,
@@ -17,4 +17,3 @@ export
     uploadPart,
     completeMultipartUpload,
     abortMultipartUpload
-    

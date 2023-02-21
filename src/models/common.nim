@@ -1,4 +1,4 @@
-import 
+import
   options
 
 # enums
@@ -27,7 +27,7 @@ type
     ON = "ON"
 
   ObjectLockLeagalHoldStatus* = OnOff
-  
+
   ObjectLockMode* = enum
     COMPLIANCE = "COMPLIANCE",
     GOVERNANCE = "GOVERNANCE"
@@ -55,10 +55,10 @@ type
 
   RequestPayer* = Request
   RequestCharged* = Request
-  
+
   EncodingType* = enum
     url = "url"
-  
+
   CommonPrefix* = object
     Prefix: Option[string]
 

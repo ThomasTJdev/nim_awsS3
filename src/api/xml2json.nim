@@ -1,4 +1,4 @@
-import 
+import
     xmlparser,
     xmltree,
     json,
@@ -7,7 +7,7 @@ import
     unittest,
     sequtils
 
-import 
+import
     utils,
     jsony
 
@@ -45,7 +45,7 @@ proc xml2Json*(xmlNode: XmlNode, splitAttr: bool=false, isFrist: bool=true): Jso
     ## Convert an XML node to a JSON node.
     ## if <Element><Element> the resulting json will be JSNull
     ## if <Element>1000</Element> the resulting json will be JSString not JSInt
-    
+
     # deal with root node.
     if isFrist:
         result = newJObject()
@@ -94,7 +94,7 @@ proc xml2Json*(xmlNode: XmlNode, splitAttr: bool=false, isFrist: bool=true): Jso
                     result[child.tag()].add(child.xml2Json(splitAttr, false))
                 else:
                     # assume it is an object
-                    result[child.tag()] = child.xml2Json(splitAttr, false)      
+                    result[child.tag()] = child.xml2Json(splitAttr, false)
             else:
                 raise newException(ValueError, "kind not implemented: " & $child.kind())
     of xnComment:

@@ -40,7 +40,7 @@ proc parseHook*(s: string, i: var int, v: var DateTime) =
     var timeFormats = @["yyyy-MM-dd", "yyyy-MM-dd hh:mm:ss", "yyyy-MM-dd'T'hh:mm:ss'.'fff'Z'"]
     for fmt in timeFormats:
         try:
-            v = parse(str, fmt)
+            v = parse(str, fmt).utc()
             return
         except:
             continue
@@ -99,7 +99,7 @@ proc renameHook*(v: object, fieldName: var string) =
 
 suite "utility functions":
     test "check amazon time format time":
-        let time = parse("2023-02-09T08:24:35.000Z", initTimeFormat "yyyy-MM-dd\'T\'HH:mm:ss\'.\'fff\'Z\'")
+        let time = parse("2023-02-09T08:24:35.000Z", "yyyy-MM-dd\'T\'HH:mm:ss\'.\'fff\'Z\'").utc()
         let expectedTime = fromUnix(1675931075).utc() # 2023-02-09T08:24:35.000Z
         check:
             time == expectedTime

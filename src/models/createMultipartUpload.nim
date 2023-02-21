@@ -1,5 +1,5 @@
 
-import 
+import
     common,
     options,
     times,
@@ -7,7 +7,7 @@ import
 
 
 
-type 
+type
     ## this file is the type definition for the s3 api was created from the aws docs
     ## https://docs.aws.amazon.com/AmazonS3/latest/API/API_CreateMultipartUpload.html
     CreateMultipartUploadRequest* = object
@@ -54,7 +54,7 @@ type
         serverSideEncryption*: Option[ServerSideEncryption]
 
         ## Storage class to be used
-        ## https://docs.aws.amazon.com/AmazonS3/latest/dev/storage-class-intro.html   
+        ## https://docs.aws.amazon.com/AmazonS3/latest/dev/storage-class-intro.html
         # storageClass*: Option[StorageClass | string]
         storageClass*: Option[StorageClass]
 
@@ -102,7 +102,7 @@ type
         checksumAlgorithm*: Option[ChecksumAlgorithm]
 
     InitiateMultipartUploadResult* = object
-        
+
         ## specified abort date for incomplete multipart uploads
         ## https://docs.aws.amazon.com/AmazonS3/latest/dev/mpuoverview.html#mpu-abort-incomplete-mpu-lifecycle-config
         abortDate*: Option[DateTime]

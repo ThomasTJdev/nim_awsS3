@@ -1,5 +1,5 @@
 # std
-import 
+import
     os,
     httpclient,
     asyncdispatch,
@@ -33,7 +33,7 @@ proc abortMultipartUpload*(
     ): Future[AbortMultipartUploadResult] {.async.}  =
     ## https://docs.aws.amazon.com/AmazonS3/latest/API/API_AbortMultipartUpload.html
 
-    # request 
+    # request
 
     # DELETE /Key+?uploadId=UploadId HTTP/1.1
     # Host: Bucket.s3.amazonaws.com
@@ -51,7 +51,7 @@ proc abortMultipartUpload*(
     # uploadId=VXBsb2FkIElEIGZvciBlbHZpbmcncyBteS1tb3ZpZS5tMnRzIHVwbG9hZ HTTP/1.1
     # Host: example-bucket.s3.<Region>.amazonaws.com
     # Date: Mon, 1 Nov 2010 20:34:56 GMT
-    # Authorization: authorization string 
+    # Authorization: authorization string
 
     # example response
 
@@ -61,15 +61,15 @@ proc abortMultipartUpload*(
     # Date: Mon, 1 Nov 2010 20:34:56 GMT
     # Content-Length: 0
     # Connection: keep-alive
-    # Server: AmazonS3 
+    # Server: AmazonS3
 
     if args.requestPayer.isSome():
         client.headers["x-amz-request-payer"] = args.requestPayer.get()
     if args.expectedBucketOwner.isSome():
         client.headers["x-amz-expected-bucket-owner"] = args.expectedBucketOwner.get()
-    
+
     let httpMethod = HttpDelete
-    let endpoint = &"htts://{bucket}.{service}.{region}.amazonaws.com"
+    let endpoint = &"https://{bucket}.{service}.{region}.amazonaws.com"
     let url = &"{endpoint}/{args.key}?uploadId={args.uploadId}"
 
     let res = await client.request(credentials=credentials, headers=headers, httpMethod=httpMethod, url=url, region=region, service=service, payload="")
@@ -88,7 +88,7 @@ proc abortMultipartUpload*(
     if res.headers.hasKey("x-amz-request-charged"):
       result.requestCharged = some($res.headers["x-amz-request-charged"])
 
-    
+
 proc main() {.async.} =
     # load .env environment variables
     load()

@@ -1,4 +1,4 @@
-import 
+import
     os,
     httpclient,
     asyncdispatch,
@@ -85,7 +85,7 @@ proc createMultipartUpload*(
     # </InitiateMultipartUploadResult>
 
     let httpMethod = HttpPost
-    let endpoint = &"htts://{bucket}.{service}.{region}.amazonaws.com"
+    let endpoint = &"https://{bucket}.{service}.{region}.amazonaws.com"
     var url = &"{endpoint}/{args.key}?uploads="
 
 
@@ -147,26 +147,28 @@ proc createMultipartUpload*(
     let body = await res.body
 
     when defined(dev):
-        echo "<url: ", url
-        echo "<method: ", httpMethod
-        echo "<code: ", res.code
-        echo "<headers: ", res.headers
-        echo "<body: ", body
+      echo "<url: ", url
+      echo "<method: ", httpMethod
+      echo "<code: ", res.code
+      echo "<headers: ", res.headers
+      echo "<body: ", body
 
     if res.code != Http200:
-        raise newException(HttpRequestError, "Error: " & $res.code & " " & await res.body)
+      raise newException(HttpRequestError, "Error: " & $res.code & " " & await res.body)
 
     let xml = body.parseXML()
     let json = xml.xml2Json()
     let jsonStr = json["InitiateMultipartUploadResult"].toJson()
-    echo jsonStr
+    when defined(dev):
+      echo jsonStr
+
     let obj = jsonStr.fromJson(InitiateMultipartUploadResult)
 
     when defined(dev):
-        echo "\n> xml: ", xml
-        echo "\n> jsonStr: ", jsonStr
-        # echo obj
-        # echo "\n> obj string: ", obj.toJson().parseJson().pretty()
+      echo "\n> xml: ", xml
+      echo "\n> jsonStr: ", jsonStr
+      # echo obj
+      # echo "\n> obj string: ", obj.toJson().parseJson().pretty()
     result = obj
 
     if res.headers.hasKey("x-amz-abort-date"):
@@ -189,18 +191,18 @@ proc createMultipartUpload*(
       result.requestCharged = some($res.headers["x-amz-request-charged"])
     if res.headers.hasKey("x-amz-checksum-algorithm"):
       result.checksumAlgorithm = some(parseEnum[CheckSumAlgorithm]($res.headers["x-amz-checksum-algorithm"]))
-          
+
 
 proc main() {.async.} =
     # load .env environment variables
     load()
     # this is just a scoped testing function
     let
-        accessKey = os.getEnv("AWS_ACCESS_KEY_ID")
-        secretKey = os.getEnv("AWS_SECRET_ACCESS_KEY")
-        region = "eu-west-2"
-        bucket = "nim-aws-s3-multipart-upload"
-        key    = "testFile.bin"
+      accessKey = os.getEnv("AWS_ACCESS_KEY_ID")
+      secretKey = os.getEnv("AWS_SECRET_ACCESS_KEY")
+      region = os.getEnv("AWS_REGION")
+      bucket = os.getEnv("AWS_BUCKET")
+      key    = "testFile.bin"
 
     let credentials = AwsCreds(AWS_ACCESS_KEY_ID: accessKey, AWS_SECRET_ACCESS_KEY: secretKey)
 
@@ -217,16 +219,16 @@ proc main() {.async.} =
 
 when isMainModule:
     try:
-        waitFor main()
+      waitFor main()
     except:
-        ## treeform async message fix
-        ## https://github.com/nim-lang/Nim/issues/19931#issuecomment-1167658160
-        let msg = getCurrentExceptionMsg()
-        for line in msg.split("\n"):
-            var line = line.replace("\\", "/")
-            if "/lib/pure/async" in line:
-                continue
-            if "#[" in line:
-                break
-            line.removeSuffix("Iter")
-            echo line
+      ## treeform async message fix
+      ## https://github.com/nim-lang/Nim/issues/19931#issuecomment-1167658160
+      let msg = getCurrentExceptionMsg()
+      for line in msg.split("\n"):
+        var line = line.replace("\\", "/")
+        if "/lib/pure/async" in line:
+            continue
+        if "#[" in line:
+            break
+        line.removeSuffix("Iter")
+        echo line

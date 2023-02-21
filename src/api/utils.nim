@@ -1,10 +1,10 @@
-import 
+import
     unittest,
     strutils,
     options,
     times
 
-import 
+import
     jsony
 
 proc parseHook*[T](s: string, i: var int, v: var Option[seq[T]]) =
@@ -27,6 +27,9 @@ proc parseHook*[T](s: string, i: var int, v: var Option[seq[T]]) =
 
 
 proc dumpHook*(s: var string, v: Option[DateTime]) =
+  if v.isNone:
+    s.add("null")
+  else:
     s.add("\"" & v.get().format("yyyy-MM-dd'T'hh:mm:ss'.'fff'Z'") & "\"" )
 
 proc dumpHook*(s: var string, v: DateTime) =
@@ -141,7 +144,7 @@ suite "utility functions":
             d1 = """{"cat":[{"name":"sparky"}]}"""
             d2 = """{"cat":{"name":"sparky"}}"""
             d3 = """{"cat":null}"""
-            
+
         check:
             d1.fromJson(MyType) == MyType(cat: some(@[Cat(name: "sparky")]))
             d2.fromJson(MyType) == MyType(cat: some(@[Cat(name: "sparky")]))

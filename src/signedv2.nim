@@ -1,4 +1,4 @@
-import 
+import
     os,
     times,
     tables,
@@ -46,7 +46,7 @@ type
 const
   basicISO8601_1 = initTimeFormat "yyyyMMdd\'T\'HHmmss\'Z\'"
 
-# canonical headers, path, qs, encodeUri from 
+# canonical headers, path, qs, encodeUri from
 # https://github.com/Gooseus/nimaws
 proc uriEncode(
     s: string,
@@ -69,7 +69,7 @@ proc createCanonicalQueryString(queryString: string): string =
   var queryParts = queryString.split("&").filter(x => x != "").map(x => x.split("=")).map(x => (x[0], x[1]))
   if queryParts.len == 0:
     return ""
-  
+
   queryParts = queryParts.sortedByIt(it[0])
   return encodeQuery(queryParts, omitEq=false)
 
@@ -138,7 +138,7 @@ proc createCanonicalRequest*(
 
   let
     uri = url.parseUri()
-    endpoint = uri.scheme & "://" & uri.hostname 
+    endpoint = uri.scheme & "://" & uri.hostname
     canonicalPath = uri.path.createCanonicalPath()
     canonicalQueryString = uri.query.createCanonicalQueryString()
 
@@ -249,7 +249,7 @@ proc createAuthorizedCanonicalRequest*(
     termination
   )
   # create signature
-  let 
+  let
     signingKey = signingKey(credentials.AWS_SECRET_ACCESS_KEY, scope, termination)
     sig = createSignature(signingKey, to_sign)
 
@@ -281,9 +281,9 @@ proc request*(
   let
     date = getTime().utc()
     scope = AwsScope(date: date, region: region, service: service)
-  
+
   var authorizedCanonicalRequest = createAuthorizedCanonicalRequest(
-        credentials, 
+        credentials,
         httpMethod,
         url,
         payload,
@@ -304,7 +304,7 @@ proc request*(
     echo canonicalURL
     echo "\n> request.client.httpClient.headers"
     echo authorizedCanonicalRequest.canonicalHeaders.headers
-  
+
   return client.request(url = canonicalURL, httpMethod = httpMethod, headers=authorizedCanonicalRequest.canonicalHeaders.headers, body = $payload)
 
 
@@ -335,8 +335,8 @@ proc main() {.async.} =
   let
     accessKey = os.getEnv("AWS_ACCESS_KEY_ID")
     secretKey = os.getEnv("AWS_SECRET_ACCESS_KEY")
-    region = "eu-west-2"
-    bucket = "nim-aws-s3-multipart-upload"
+    region = os.getEnv("AWS_REGION")
+    bucket = os.getEnv("AWS_BUCKET")
 
   let creds = AwsCreds(AWS_ACCESS_KEY_ID: accessKey, AWS_SECRET_ACCESS_KEY: secretKey)
 

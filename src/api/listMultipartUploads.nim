@@ -1,5 +1,5 @@
 # std
-import 
+import
     os,
     httpclient,
     asyncdispatch,
@@ -113,7 +113,7 @@ proc listMultipartUploads*(
     #       <DisplayName>OwnerDisplayName</DisplayName>
     #     </Owner>
     #     <StorageClass>STANDARD</StorageClass>
-    #     <Initiated>2010-11-10T20:48:33.000Z</Initiated>  
+    #     <Initiated>2010-11-10T20:48:33.000Z</Initiated>
     #   </Upload>
     #   <Upload>
     #     <Key>my-movie.m2ts</Key>
@@ -144,63 +144,64 @@ proc listMultipartUploads*(
     #     <Initiated>2010-11-10T20:49:33.000Z</Initiated>
     #   </Upload>
     # </ListMultipartUploadsResult>
-    
+
     if args.expectedBucketOwner.isSome():
-        client.headers["x-amz-expected-bucket-owner"] = args.expectedBucketOwner.get()
-    
+      client.headers["x-amz-expected-bucket-owner"] = args.expectedBucketOwner.get()
+
     # GET /?uploads=&delimiter=Delimiter&encoding-type=EncodingType&key-marker=KeyMarker&max-uploads=MaxUploads&prefix=Prefix&upload-id-marker=UploadIdMarker HTTP/1.1
 
     let httpMethod = HttpGet
-    let endpoint = &"htts://{bucket}.{service}.{region}.amazonaws.com"
+    let endpoint = &"https://{bucket}.{service}.{region}.amazonaws.com"
     var url = &"{endpoint}/?uploads="
 
     if args.delimiter.isSome():
-        url = url & "&delimiter=" & args.delimiter.get()
+      url = url & "&delimiter=" & args.delimiter.get()
     if args.encodingType.isSome():
-        url = url & "&encoding-type=" & args.encodingType.get()
+      url = url & "&encoding-type=" & args.encodingType.get()
     if args.keyMarker.isSome():
-        url = url & "&key-marker=" & args.keyMarker.get()
+      url = url & "&key-marker=" & args.keyMarker.get()
     if args.maxUploads.isSome():
-        url = url & "&max-uploads=" & $args.maxUploads.get()
+      url = url & "&max-uploads=" & $args.maxUploads.get()
     if args.prefix.isSome():
-        url = url & "&prefix=" & args.prefix.get()
+      url = url & "&prefix=" & args.prefix.get()
     if args.uploadIdMarker.isSome():
-        url = url & "&upload-id-marker=" & args.uploadIdMarker.get()
-    
+      url = url & "&upload-id-marker=" & args.uploadIdMarker.get()
+
 
 
     let res = await client.request(credentials=credentials, headers=headers, httpMethod=httpMethod, url=url, region=region, service=service, payload="")
     let body = await res.body
 
     when defined(dev):
-        echo "\n< listMultipartUploads.url"
-        echo url
-        echo "\n< listMultipartUploads.method"
-        echo httpMethod
-        echo "\n< listMultipartUploads.code"
-        echo res.code
-        echo "\n< listMultipartUploads.headers"
-        echo res.headers
-        echo "\n< listMultipartUploads.body"
-        echo body
+      echo "\n< listMultipartUploads.url"
+      echo url
+      echo "\n< listMultipartUploads.method"
+      echo httpMethod
+      echo "\n< listMultipartUploads.code"
+      echo res.code
+      echo "\n< listMultipartUploads.headers"
+      echo res.headers
+      echo "\n< listMultipartUploads.body"
+      echo body
 
     if res.code != Http200:
-        raise newException(HttpRequestError, "Error: " & $res.code & " " & await res.body)
+      raise newException(HttpRequestError, "Error: " & $res.code & " " & await res.body)
 
     let xml = body.parseXML()
     let json = xml.xml2Json()
     let jsonStr = json["ListMultipartUploadsResult"].toJson()
-    echo "\n> jsonStr: "
-    echo jsonStr
+    when defined(dev):
+      echo "\n> jsonStr: "
+      echo jsonStr
     let obj = jsonStr.fromJson(ListMultipartUploadsResult)
 
     when defined(dev):
-        echo "\n> xml: ", xml
-        echo "\n> jsonStr: ", jsonStr
-        # echo obj
-        # echo "\n> obj string: ", obj.toJson().parseJson().pretty()
+      echo "\n> xml: ", xml
+      echo "\n> jsonStr: ", jsonStr
+      # echo obj
+      # echo "\n> obj string: ", obj.toJson().parseJson().pretty()
     result = obj
-    
+
 
 
 
@@ -211,8 +212,8 @@ proc main() {.async.} =
     let
         accessKey = os.getEnv("AWS_ACCESS_KEY_ID")
         secretKey = os.getEnv("AWS_SECRET_ACCESS_KEY")
-        region = "eu-west-2"
-        bucket = "nim-aws-s3-multipart-upload"
+        region = os.getEnv("AWS_REGION")
+        bucket = os.getEnv("AWS_BUCKET")
 
     let credentials = AwsCreds(AWS_ACCESS_KEY_ID: accessKey, AWS_SECRET_ACCESS_KEY: secretKey)
 

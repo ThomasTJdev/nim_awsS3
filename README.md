@@ -358,6 +358,12 @@ proc s3TrashObject*(creds: AwsCreds, bucketTrashHost, bucketFromHost, bucketFrom
 This does a pseudo move of an object. We copy the object to the destination and then we delete the object from the original location. The destination in this particular situation - is our trash.
 
 
+
+
+
+
+
+
 # S3 Multpart uploads
 
 The upload part in ```src/api/uploadPart.nim``` contains a full example of 
@@ -472,5 +478,3 @@ echo result.toJson().parseJson().pretty()
 ```
 
 ____
-
-**README generated with [nimtomd](https://github.com/ThomasTJdev/nimtomd)**

@@ -27,6 +27,9 @@ proc parseHook*[T](s: string, i: var int, v: var Option[seq[T]]) =
 
 
 proc dumpHook*(s: var string, v: Option[DateTime]) =
+  if v.isNone:
+    s.add("null")
+  else:
     s.add("\"" & v.get().format("yyyy-MM-dd'T'hh:mm:ss'.'fff'Z'") & "\"" )
 
 proc dumpHook*(s: var string, v: DateTime) =

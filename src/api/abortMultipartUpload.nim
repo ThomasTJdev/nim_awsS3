@@ -69,7 +69,7 @@ proc abortMultipartUpload*(
         client.headers["x-amz-expected-bucket-owner"] = args.expectedBucketOwner.get()
 
     let httpMethod = HttpDelete
-    let endpoint = &"htts://{bucket}.{service}.{region}.amazonaws.com"
+    let endpoint = &"https://{bucket}.{service}.{region}.amazonaws.com"
     let url = &"{endpoint}/{args.key}?uploadId={args.uploadId}"
 
     let res = await client.request(credentials=credentials, headers=headers, httpMethod=httpMethod, url=url, region=region, service=service, payload="")

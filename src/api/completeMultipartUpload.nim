@@ -96,7 +96,7 @@ proc completeMultipartUpload*(
     # </CompleteMultipartUploadResult>
 
     let httpMethod = HttpPost
-    let endpoint = &"htts://{bucket}.{service}.{region}.amazonaws.com"
+    let endpoint = &"https://{bucket}.{service}.{region}.amazonaws.com"
     var url = &"{endpoint}/{args.key}?uploadId={args.uploadId}"
 
     if args.checksumCRC32.isSome():

@@ -83,7 +83,7 @@ proc listParts*(
     # GET /Key+?max-parts=MaxParts&part-number-marker=PartNumberMarker&uploadId=UploadId HTTP/1.1
 
     let httpMethod = HttpGet
-    let endpoint = &"htts://{bucket}.{service}.{region}.amazonaws.com"
+    let endpoint = &"https://{bucket}.{service}.{region}.amazonaws.com"
     var url = ""
     if args.key.isSome():
       url = &"{endpoint}/" & args.key.get() & "?"

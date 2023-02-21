@@ -82,7 +82,7 @@ proc uploadPart*(
 
 
     let httpMethod = HttpPut
-    let endpoint = &"htts://{bucket}.{service}.{region}.amazonaws.com"
+    let endpoint = &"https://{bucket}.{service}.{region}.amazonaws.com"
     var url = &"{endpoint}/{args.key}?partNumber={args.partNumber}&uploadId={args.uploadId}"
 
     if args.contentLength.isSome():

@@ -85,7 +85,7 @@ proc createMultipartUpload*(
     # </InitiateMultipartUploadResult>
 
     let httpMethod = HttpPost
-    let endpoint = &"htts://{bucket}.{service}.{region}.amazonaws.com"
+    let endpoint = &"https://{bucket}.{service}.{region}.amazonaws.com"
     var url = &"{endpoint}/{args.key}?uploads="
 
 

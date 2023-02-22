@@ -46,11 +46,12 @@ proc parseHook*(s: string, i: var int, v: var DateTime) =
         "yyyy-MM-dd hh:mm:ssz", 
         "yyyy-MM-dd hh:mm:sszz",
         "yyyy-MM-dd hh:mm:sszzzz", 
-        "yyyy-MM-dd hh:mm:ss.fff",
+        "yyyy-MM-dd'T'hh:mm:ss'.'fff",
         "yyyy-MM-dd'T'hh:mm:ss'.'fffz", 
         "yyyy-MM-dd'T'hh:mm:ss'.'fffzz", 
         "yyyy-MM-dd'T'hh:mm:ss'.'fffzzz",
         "yyyy-MM-dd'T'hh:mm:ss'.'fff'Z'", 
+        "yyyy-MM-dd'T'hh:mm:ss'.'fff'Z'zz",
         "yyyy-MM-dd'T'hh:mm:ss'.'fff'Z'zzz",
         ]
     for fmt in timeFormats:

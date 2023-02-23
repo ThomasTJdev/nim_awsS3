@@ -1,3 +1,10 @@
+# v3.0.0
+
+## Changes
+
+* Implement support for multipart upload and friends.
+
+
 # v2.0.1
 
 ## Changes

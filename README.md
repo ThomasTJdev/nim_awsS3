@@ -358,8 +358,123 @@ proc s3TrashObject*(creds: AwsCreds, bucketTrashHost, bucketFromHost, bucketFrom
 This does a pseudo move of an object. We copy the object to the destination and then we delete the object from the original location. The destination in this particular situation - is our trash.
 
 
+
+
+
+
+
+
+# S3 Multpart uploads
+
+The upload part in ```src/api/uploadPart.nim``` contains a full example of 
+- abortMultipartUpload
+- listMultipartUpload
+- listParts
+- completeMultipartUpload
+- createMultipartUpload
 ____
 
+## abordMultipartUpload
 
+```nim
+let abortMultipartUploadRequest = AbortMultipartUploadRequest(
+  bucket: bucket,
+  key: upload.key,
+  uploadId: upload.uploadId.get()
+)
 
-**README generated with [nimtomd](https://github.com/ThomasTJdev/nimtomd)**
+try:
+    var abortClient = newAsyncHttpClient()
+    let abortMultipartUploadResult = await abortClient.abortMultipartUpload(credentials=credentials, bucket=bucket, region=region, args=abortMultipartUploadRequest)
+    echo abortMultipartUploadResult.toJson().parseJson().pretty()
+except:
+    echo getCurrentExceptionMsg()
+
+```
+
+____
+
+## createMultipartUpload
+
+```nim
+    # initiate the multipart upload
+    let createMultiPartUploadRequest = CreateMultipartUploadRequest(
+        bucket: bucket,
+        key: key,
+      )
+
+    let createMultiPartUploadResult = await client.createMultipartUpload(
+            credentials = credentials,
+            bucket = bucket,
+            region = region,
+            args = createMultiPartUploadRequest
+      )
+
+```
+
+____
+
+## completeMultipartUpload
+
+```nim
+let args = CompleteMultipartUploadRequest(
+    bucket: bucket,
+    key: key,
+    uploadId: uploadId
+)
+
+let res = await client.completeMultipartUpload(credentials=credentials, bucket=bucket, region=region, args=args)
+echo res.toJson().parseJson().pretty()
+
+```
+
+____
+
+## uploadPart
+
+```nim
+let uploadPartCommandRequest = UploadPartCommandRequest(
+    bucket: bucket,
+    key: key,
+    body: body,
+    partNumber: partNumber,
+    uploadId: createMultiPartUploadResult.uploadId
+)
+let res = await client.uploadPart(
+  credentials = credentials,
+  bucket = bucket,
+  region = region,
+  args = uploadPartCommandRequest
+)
+echo "\n> uploadPart"
+echo res.toJson().parseJson().pretty()
+```
+____
+
+## listMultipartUploads
+
+```nim
+let listMultipartUploadsRequest = ListMultipartUploadsRequest(
+    bucket: bucket,
+    prefix: some("test")
+)
+let listMultipartUploadsRes = await client.listMultipartUploads(credentials=credentials, bucket=bucket, region=region, args=listMultipartUploadsRequest)
+
+```
+
+____
+
+## listParts
+
+```nim
+let args = ListPartsRequest(
+    bucket: bucket,
+    key: some(key),
+    uploadId: some(uploadId)
+)
+let result = await client.listParts(credentials=credentials, bucket=bucket, region=region, args=args)
+# echo result
+echo result.toJson().parseJson().pretty()
+```
+
+____

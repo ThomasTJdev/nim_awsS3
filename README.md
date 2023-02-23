@@ -372,6 +372,19 @@ The upload part in ```src/api/uploadPart.nim``` contains a full example of
 - listParts
 - completeMultipartUpload
 - createMultipartUpload
+
+## Quick test
+
+The multipart files contains `when isMainModule` which can be used to test the upload
+procedures.
+
+To test the full upload procedure: Create a file called testFile.bin with
++10MB of data, copy `example.env` to `.env`, run `nimble install dotenv`
+and then run the following command:
+
+```nim
+nim c -d:dev -r src/api/uploadPart.nim
+```
 ____
 
 ## abordMultipartUpload

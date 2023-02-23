@@ -12,7 +12,6 @@ import
     sugar
 
 import
-    dotenv,
     nimSHA2,
     hmac
 
@@ -311,8 +310,6 @@ proc request*(
 
 
 proc main() {.async.} =
-  # load .env environment variables
-  load()
   # this is just a scoped testing function
   proc listMultipartUpload(
     client: AsyncHttpClient,
@@ -345,6 +342,9 @@ proc main() {.async.} =
 
 
 when isMainModule:
+  import dotenv
+  load()
+
   try:
     waitFor main()
   except:

@@ -20,7 +20,6 @@ import
     xml2Json,
     json,
     jsony,
-    dotenv,
     utils,
     nimSHA2
 
@@ -159,8 +158,6 @@ proc uploadPart*(
       result.requestCharged = some($res.headers["x-amz-request-charged"])
 
 proc main() {.async.} =
-    # load .env environment variables
-    load()
     # this is just a scoped testing function
     let
         accessKey = os.getEnv("AWS_ACCESS_KEY_ID")
@@ -289,17 +286,20 @@ proc main() {.async.} =
     echo completeMultipartUploadResult.toJson().parseJson().pretty()
 
 when isMainModule:
-    try:
-        waitFor main()
-    except:
-        ## treeform async message fix
-        ## https://github.com/nim-lang/Nim/issues/19931#issuecomment-1167658160
-        let msg = getCurrentExceptionMsg()
-        for line in msg.split("\n"):
-            var line = line.replace("\\", "/")
-            if "/lib/pure/async" in line:
-                continue
-            if "#[" in line:
-                break
-            line.removeSuffix("Iter")
-            echo line
+  import dotenv
+  load()
+
+  try:
+    waitFor main()
+  except:
+    ## treeform async message fix
+    ## https://github.com/nim-lang/Nim/issues/19931#issuecomment-1167658160
+    let msg = getCurrentExceptionMsg()
+    for line in msg.split("\n"):
+      var line = line.replace("\\", "/")
+      if "/lib/pure/async" in line:
+        continue
+      if "#[" in line:
+        break
+      line.removeSuffix("Iter")
+      echo line

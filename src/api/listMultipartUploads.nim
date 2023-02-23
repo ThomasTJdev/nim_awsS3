@@ -17,7 +17,6 @@ import
     xml2Json,
     json,
     jsony,
-    dotenv,
     utils
 
 from awsSTS import AwsCreds
@@ -206,8 +205,6 @@ proc listMultipartUploads*(
 
 
 proc main() {.async.} =
-    # load .env environment variables
-    load()
     # this is just a scoped testing function
     let
         accessKey = os.getEnv("AWS_ACCESS_KEY_ID")
@@ -228,6 +225,9 @@ proc main() {.async.} =
 
 
 when isMainModule:
+  import dotenv
+  load()
+
   try:
     waitFor main()
   except:

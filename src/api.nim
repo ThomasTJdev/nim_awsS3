@@ -303,9 +303,18 @@ proc s3MoveObject*(creds: AwsCreds, bucketToHost, keyTo, bucketFromHost, bucketF
   client.close()
 
 
-proc s3MoveObjects*(creds: AwsCreds, bucketHost, bucketFromHost, bucketFromName: string, keys: seq[string]) {.async.} =
+proc s3MoveObjects*(
+    creds: AwsCreds,
+    bucketHost, bucketFromHost, bucketFromName: string,
+    keys: seq[string],
+    waitValidate = 0,
+    waitDelete = 0
+  ) {.async.} =
   ## In this (plural) multiple moves are performed. The keys are identical in
   ## "from" and "to", so origin and destination are the same.
+  ##
+  ## The `waitValidate` and `waitDelete` are used to wait between the validation
+  ## if the file exists and delete operation.
   let client = newAsyncHttpClient()
 
   var keysSuccess: seq[string]
@@ -316,7 +325,7 @@ proc s3MoveObjects*(creds: AwsCreds, bucketHost, bucketFromHost, bucketFromName:
         keysSuccess.add(key)
     except:
       error("s3MoveObjects(): Failed on copy - " & bucketHost & " - " & key)
-      continue
+    await sleepAsync(waitValidate)
 
   for key in keysSuccess:
     try:
@@ -324,7 +333,7 @@ proc s3MoveObjects*(creds: AwsCreds, bucketHost, bucketFromHost, bucketFromName:
         warn("s3MoveObject(): Could not delete - " & bucketFromHost & " - " & key)
     except:
       error("s3MoveObjects(): Failed on delete - " & bucketFromHost & " - " & key)
-      continue
+    await sleepAsync(waitDelete)
 
   client.close()
 
@@ -340,8 +349,17 @@ proc s3TrashObject*(creds: AwsCreds, bucketTrashHost, bucketFromHost, bucketFrom
   await s3MoveObject(creds, bucketTrashHost, keyFrom, bucketFromHost, bucketFromName, keyFrom)
 
 
-proc s3TrashObjects*(creds: AwsCreds, bucketTrashHost, bucketFromHost, bucketFromName: string, keys: seq[string]) {.async.} =
+proc s3TrashObjects*(
+    creds: AwsCreds,
+    bucketTrashHost, bucketFromHost, bucketFromName: string,
+    keys: seq[string],
+    waitValidate = 0,
+    waitDelete = 0
+  ) {.async.} =
   ## This does a pseudo move of an object. We copy the object to the destination
   ## and then we delete the object from the original location.
   ## The destination in this particular situation - is our trash.
-  await s3MoveObjects(creds, bucketTrashHost, bucketFromHost, bucketFromName, keys)
+  ##
+  ## The `waitValidate` is the time to wait between validating the existence of
+  ## the file. The `waitDelete` is the time to wait between deleting the files.
+  await s3MoveObjects(creds, bucketTrashHost, bucketFromHost, bucketFromName, keys, waitValidate, waitDelete)

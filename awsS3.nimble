@@ -1,4 +1,4 @@
-version       = "3.0.0"
+version       = "3.0.1"
 author        = "Thomas T. Jarløv (https://github.com/ThomasTJdev)"
 description   = "Amazon S3 REST API (basic)"
 license       = "MIT"

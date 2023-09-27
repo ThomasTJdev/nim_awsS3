@@ -341,10 +341,12 @@ ____
 ## s3MoveObjects*
 
 ```nim
-proc s3MoveObjects*(creds: AwsCreds, bucketHost, bucketFromHost, bucketFromName: string, keys: seq[string]) {.async.} =
+proc s3MoveObjects*(creds: AwsCreds, bucketHost, bucketFromHost, bucketFromName: string, keys: seq[string], waitValidate = 0, waitDelete = 0) {.async.} =
 ```
 
 In this (plural) multiple moves are performed. The keys are identical in "from" and "to", so origin and destination are the same.
+
+The `waitValidate` and `waitDelete` are used to wait between the validation if the file exists and delete operation.
 
 
 ____

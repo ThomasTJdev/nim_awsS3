@@ -1,36 +1,5 @@
-# Ignore binary files
-*
-# Unignore all with extensions
-!*.*
-# Unignore all dirs
-!*/
-# Ignore `bin` dir ORDER MATERS
-bin/
-*/bin/*
-*.out
-*.o
-*.bin
-*.o.dSYM
-
-.vscode
-
-# secrets
-.env
-server.key
-server.cert
-server.pem
-
-
-# macos
-.DS_store
-
-
-nimcache/
-nimblecache/
-htmldocs/
-
 # test files
 testFile.bin
-tester
-tester.nim
+tester*
+tester_*.nim
 test3.jpg

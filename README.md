@@ -359,16 +359,18 @@ proc s3TrashObject*(creds: AwsCreds, bucketTrashHost, bucketFromHost, bucketFrom
 
 This does a pseudo move of an object. We copy the object to the destination and then we delete the object from the original location. The destination in this particular situation - is our trash.
 
+______
 
 
+# S3 Multipart uploads
 
+To use multipart import it with:
 
+```nim
+import awsS3/multipart
+```
 
-
-
-# S3 Multpart uploads
-
-The upload part in ```src/api/uploadPart.nim``` contains a full example of 
+The upload part in ```src/multipart/api/uploadPart.nim``` contains a full example of
 - abortMultipartUpload
 - listMultipartUpload
 - listParts
@@ -385,7 +387,7 @@ To test the full upload procedure: Create a file called testFile.bin with
 and then run the following command:
 
 ```nim
-nim c -d:dev -r src/api/uploadPart.nim
+nim c -d:dev -r src/multipart/api/uploadPart.nim
 ```
 ____
 
@@ -412,19 +414,18 @@ ____
 ## createMultipartUpload
 
 ```nim
-    # initiate the multipart upload
-    let createMultiPartUploadRequest = CreateMultipartUploadRequest(
-        bucket: bucket,
-        key: key,
-      )
+# initiate the multipart upload
+let createMultiPartUploadRequest = CreateMultipartUploadRequest(
+    bucket: bucket,
+    key: key,
+  )
 
-    let createMultiPartUploadResult = await client.createMultipartUpload(
-            credentials = credentials,
-            bucket = bucket,
-            region = region,
-            args = createMultiPartUploadRequest
-      )
-
+let createMultiPartUploadResult = await client.createMultipartUpload(
+        credentials = credentials,
+        bucket = bucket,
+        region = region,
+        args = createMultiPartUploadRequest
+  )
 ```
 
 ____

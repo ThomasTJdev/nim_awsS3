@@ -35,6 +35,7 @@ import
 
 import
   awsS3,
+  awsS3/utils_async,
   awsSTS
 
 const
@@ -176,6 +177,8 @@ ____
 
 ## isSuccess2xx*
 
+**[utils package - async & sync]**
+
 ```nim
 proc isSuccess2xx*(response: AsyncResponse): (bool) =
 ```
@@ -197,6 +200,8 @@ AWS S3 API - DeleteObject
 ____
 
 ## s3DeleteObjectIs2xx*
+
+**[utils package - async & sync]**
 
 ```nim
 proc s3DeleteObjectIs2xx*(creds: AwsCreds, bucketHost, key: string): Future[bool] {.async.} =
@@ -221,6 +226,8 @@ AWS S3 API - HeadObject
 ____
 
 ## s3HeadObjectIs2xx*
+
+**[utils package - async & sync]**
 
 ```nim
 proc s3HeadObjectIs2xx*(creds: AwsCreds, bucketHost, key: string): Future[bool] {.async.} =
@@ -247,6 +254,8 @@ AWS S3 API - GetObject
 ____
 
 ## s3GetObjectIs2xx*
+
+**[utils package - async & sync]**
 
 ```nim
 proc s3GetObjectIs2xx*(creds: AwsCreds, bucketHost, key, downloadPath: string): Future[bool] {.async.} =
@@ -275,6 +284,8 @@ The PutObject reads the file to memory and uploads it.
 ____
 
 ## s3PutObjectIs2xx*
+
+**[utils package - async & sync]**
 
 ```nim
 proc s3PutObjectIs2xx*(creds: AwsCreds, bucketHost, key, localPath: string, deleteLocalFileAfter=true): Future[bool] {.async.} =
@@ -310,6 +321,8 @@ ____
 
 ## s3CopyObjectIs2xx*
 
+**[utils package - async & sync]**
+
 ```nim
 proc s3CopyObjectIs2xx*(client: AsyncHttpClient, creds: AwsCreds, bucketHost, key, copyObject: string): Future[bool] {.async.} =
 ```
@@ -340,6 +353,8 @@ ____
 
 ## s3MoveObjects*
 
+**[utils package - async & sync]**
+
 ```nim
 proc s3MoveObjects*(creds: AwsCreds, bucketHost, bucketFromHost, bucketFromName: string, keys: seq[string], waitValidate = 0, waitDelete = 0) {.async.} =
 ```
@@ -353,11 +368,29 @@ ____
 
 ## s3TrashObject*
 
+**[utils package - async & sync]**
+
 ```nim
 proc s3TrashObject*(creds: AwsCreds, bucketTrashHost, bucketFromHost, bucketFromName, keyFrom: string) {.async.} =
 ```
 
 This does a pseudo move of an object. We copy the object to the destination and then we delete the object from the original location. The destination in this particular situation - is our trash.
+
+____
+
+## s3TrashObjects*
+
+**[utils package - async & sync]**
+
+```nim
+proc s3TrashObjects*(creds: AwsCreds, bucketTrashHost, bucketFromHost, bucketFromName, keyFrom: seq[string], waitValidate = 0, waitDelete = 0) {.async.} =
+```
+
+This does a pseudo move of an object. We copy the object to the destination and then we delete the object from the original location. The destination in this particular situation - is our trash.
+
+
+
+
 
 ______
 

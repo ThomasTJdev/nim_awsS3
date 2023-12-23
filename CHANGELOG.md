@@ -1,3 +1,21 @@
+# v3.0.2
+
+## Changes
+
+* Implementation of synchronous procedures
+
+## Breaking changes
+
+* Refactor folder structure. Split multipart upload into separate area.
+* To use multipart upload `import awsS3/multipart`
+* `s3CopyObjectIs2xx` has wrong formatting - required client-param but also
+  initialized a client.
+* All suger procedures, e.g. `is2xx`, has been splitted into separate files
+  for async and sync. To use them `import awsS3/utils_async` or
+  `import awsS3/utils_sync`
+
+
+
 # v3.0.0
 
 ## Changes

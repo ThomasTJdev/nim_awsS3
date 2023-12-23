@@ -1,8 +1,8 @@
-version       = "3.0.1"
+version       = "3.0.2"
 author        = "Thomas T. Jarløv (https://github.com/ThomasTJdev)"
 description   = "Amazon S3 REST API (basic)"
 license       = "MIT"
-installDirs   = @["src"]
+srcDir        = "src"
 
 requires "nim >= 1.4.2"
 requires "sigv4 == 1.3.0"

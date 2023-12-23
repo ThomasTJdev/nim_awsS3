@@ -1,8 +1,8 @@
 #
 # Default
 #
-import src/api
+import awsS3/api
 export api
 
-import src/signed
+import awsS3/signed
 export signed

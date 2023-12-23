@@ -152,3 +152,42 @@ proc s3SignedUrl*(awsCreds: AwsCreds, bucketHost, key: string,
       fileExt = fileExt, customQuery = customQuery, copyObject = copyObject, expireInSec = expireInSec,
       accessToken = awsCreds.AWS_SESSION_TOKEN
     )
+
+
+
+#
+# S3 presigned GET
+#
+proc s3Presigned*(accessKey, secretKey, region: string, bucketHost, key: string,
+    httpMethod = HttpGet,
+    contentDisposition = CDTattachment, contentDispositionName = "",
+    setContentType = true, fileExt = "", expireInSec = "65", accessToken = ""
+  ): string =
+  ## Generates a S3 presigned url for sharing.
+  ##
+  ## contentDisposition => sets "Content-Disposition" type (inline/attachment)
+  ## contentDispositionName => sets "Content-Disposition" name
+  ## setContentType => sets "Content-Type"
+  ## fileExt        => only if setContentType=true
+  ##                   if `fileExt = ""` then mimetype is automated
+  ##                   needs to be ".jpg" (dot before) like splitFile(f).ext
+  return s3SignedUrl(accessKey, secretKey, region, bucketHost, key,
+      httpMethod = httpMethod,
+      contentDisposition = contentDisposition, contentDispositionName = contentDispositionName,
+      setContentType = setContentType,
+      fileExt = fileExt, expireInSec = expireInSec, accessToken = accessToken
+    )
+
+
+proc s3Presigned*(creds: AwsCreds, bucketHost, key: string,
+    contentDisposition = CDTattachment, contentDispositionName="",
+    setContentType=true, fileExt="", expireInSec="65"): string =
+
+  return s3Presigned(
+      creds.AWS_ACCESS_KEY_ID, creds.AWS_SECRET_ACCESS_KEY, creds.AWS_REGION,
+      bucketHost, key,
+      httpMethod = HttpGet,
+      contentDisposition = contentDisposition, contentDispositionName = contentDispositionName,
+      setContentType = setContentType, fileExt = fileExt, expireInSec = expireInSec,
+      accessToken = creds.AWS_SESSION_TOKEN
+    )

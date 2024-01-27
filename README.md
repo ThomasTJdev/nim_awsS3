@@ -397,7 +397,7 @@ ______
 
 # S3 Multipart uploads
 
-To use multipart import it with:
+To use multipart import it directly and compile with `-d:s3multipart`:
 
 ```nim
 import awsS3/multipart

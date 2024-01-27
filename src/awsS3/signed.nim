@@ -10,10 +10,9 @@ import
   std/strutils,
   std/tables
 
-
 import
-  awsSTS,
-  sigv4
+  awsSigV4,
+  awsSTS
 
 type
   S3ContentDisposition* = enum
@@ -126,13 +125,13 @@ proc s3SignedUrl*(
 
   let
     request   = canonicalRequest(httpMethod, url, query, headers, payload, digest = UnsignedPayload)
-    sts       = stringToSign(request.hash(digest), scope, date = datetime, digest = digest)
+    sts       = stringToSign(request, scope, date = datetime, digest = digest)
     signature = calculateSignature(secret=secretKey, date = datetime, region = region,
                                   service = service, tosign = sts, digest = digest)
 
   result = url & "?" & request.split("\n")[2] & "&X-Amz-Signature=" & signature
 
-  when defined(dev):
+  when defined(verboseS3):
     echo result
 
 

@@ -20,22 +20,22 @@ proc parseReponse*(response: Response): (bool, HttpHeaders) =
   ## Helper-Procedure that can be used to return true on success and the response
   ## headers.
   if response.code.is2xx:
-    when defined(dev): echo "success: " & $response.code
+    when defined(verboseS3): echo "success: " & $response.code
     return (true, response.headers)
 
   else:
-    when defined(dev): echo "failure: " & $response.code
+    when defined(verboseS3): echo "failure: " & $response.code
     return (false, response.headers)
 
 
 proc isSuccess2xx*(response: Response): (bool) =
   ## Helper-Procedure that can be used with the raw call for parsing the response.
   if response.code.is2xx:
-    when defined(dev): echo "success: " & $response.code
+    when defined(verboseS3): echo "success: " & $response.code
     return (true)
 
   else:
-    when defined(dev): echo "failure: " & $response.code
+    when defined(verboseS3): echo "failure: " & $response.code
     return (false)
 
 

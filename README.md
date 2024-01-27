@@ -52,7 +52,7 @@ const
 
 
 ## Get creds with awsSTS package
-let creds = awsCredentialGet(myAccessKey, mySecretKey, role, serverRegion)
+let creds = awsSTScreate(myAccessKey, mySecretKey, serverRegion, role)
 
 ## 1) Create test file
 writeFile(localTestFile, "blabla")

@@ -1,11 +1,11 @@
-version       = "3.1.0"
+version       = "3.1.1"
 author        = "Thomas T. Jarløv (https://github.com/ThomasTJdev)"
 description   = "Amazon S3 REST API (basic)"
 license       = "MIT"
 srcDir        = "src"
 
 requires "nim >= 1.4.2"
-requires "https://github.com/ThomasTJdev/nim_awsSigV4 >= 0.0.1"
+requires "awsSigV4 >= 0.0.2"
 requires "awsSTS >= 1.0.3"
 requires "jsony == 1.1.5"
 

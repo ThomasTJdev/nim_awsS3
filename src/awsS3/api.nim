@@ -154,7 +154,7 @@ proc s3CopyObject*(client: AsyncHttpClient, creds: AwsCreds, bucketHost, key, co
       ("x-amz-copy-source", copyObjectEncoded),
     ])
 
-  result = await client.request(s3SignedUrl(creds, bucketHost, key, httpMethod=HttpPut, copyObject=copyObjectEncoded), httpMethod=HttpPut, headers=headers)
+  result = await client.request(s3SignedUrl(creds, bucketHost, key, httpMethod=HttpPut, copyObject=copyObjectEncoded, setContentType=false), httpMethod=HttpPut, headers=headers)
 
 
 proc s3CopyObject*(client: HttpClient, creds: AwsCreds, bucketHost, key, copyObject: string): Response =
@@ -179,6 +179,6 @@ proc s3CopyObject*(client: HttpClient, creds: AwsCreds, bucketHost, key, copyObj
       ("x-amz-copy-source", copyObjectEncoded),
     ])
 
-  result = client.request(s3SignedUrl(creds, bucketHost, key, httpMethod=HttpPut, copyObject=copyObjectEncoded), httpMethod=HttpPut, headers=headers)
+  result = client.request(s3SignedUrl(creds, bucketHost, key, httpMethod=HttpPut, copyObject=copyObjectEncoded, setContentType=false), httpMethod=HttpPut, headers=headers)
 
 

@@ -28,7 +28,7 @@ proc s3SignedUrl*(
     credsAccessKey, credsSecretKey, credsRegion: string,
     bucketHost, key: string,
     httpMethod = HttpGet,
-    contentDisposition = CDTignore, contentDispositionName = "",
+    contentDisposition: S3ContentDisposition = CDTignore, contentDispositionName = "",
     setContentType = true,
     fileExt = "", customQuery = "", copyObject = "", expireInSec = "65",
     accessToken = ""
@@ -137,7 +137,7 @@ proc s3SignedUrl*(
 
 proc s3SignedUrl*(awsCreds: AwsCreds, bucketHost, key: string,
     httpMethod = HttpGet,
-    contentDisposition = CDTignore, contentDispositionName = "",
+    contentDisposition: S3ContentDisposition = CDTignore, contentDispositionName = "",
     setContentType = true, fileExt = "", customQuery = "", copyObject = "",
     expireInSec = "65"
   ): string =
@@ -159,7 +159,7 @@ proc s3SignedUrl*(awsCreds: AwsCreds, bucketHost, key: string,
 #
 proc s3Presigned*(accessKey, secretKey, region: string, bucketHost, key: string,
     httpMethod = HttpGet,
-    contentDisposition = CDTattachment, contentDispositionName = "",
+    contentDisposition: S3ContentDisposition = CDTattachment, contentDispositionName = "",
     setContentType = true, fileExt = "", expireInSec = "65", accessToken = ""
   ): string =
   ## Generates a S3 presigned url for sharing.
@@ -179,7 +179,7 @@ proc s3Presigned*(accessKey, secretKey, region: string, bucketHost, key: string,
 
 
 proc s3Presigned*(creds: AwsCreds, bucketHost, key: string,
-    contentDisposition = CDTattachment, contentDispositionName="",
+    contentDisposition: S3ContentDisposition = CDTattachment, contentDispositionName="",
     setContentType=true, fileExt="", expireInSec="65"): string =
 
   return s3Presigned(

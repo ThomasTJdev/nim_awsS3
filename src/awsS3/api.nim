@@ -30,6 +30,7 @@ import
     logging,
     os,
     strutils,
+    times,
     uri
   ]
 
@@ -66,7 +67,19 @@ proc s3DeleteObject*(client: AsyncHttpClient, creds: AwsCreds, bucketHost, key: 
 
 proc s3DeleteObject*(client: HttpClient, creds: AwsCreds, bucketHost, key: string): Response =
   ## AWS S3 API - DeleteObject
-  result = client.request(s3SignedUrl(creds, bucketHost, key, httpMethod=HttpDelete, setContentType=false), httpMethod=HttpDelete)
+  var s3Link: string
+  block:
+    let datetime = getTime().utc.format(basicISO8601)
+    s3Link = s3SignedUrl(
+      creds.AWS_ACCESS_KEY_ID, creds.AWS_SECRET_ACCESS_KEY, creds.AWS_REGION,
+      bucketHost, key,
+      httpMethod = HttpDelete,
+      setContentType = false,
+      expireInSec = "65",
+      accessToken = creds.AWS_SESSION_TOKEN,
+      makeDateTime = datetime
+    )
+  result = client.request(s3Link, httpMethod=HttpDelete)
 
 
 
@@ -87,7 +100,19 @@ proc s3HeadObject*(client: HttpClient, creds: AwsCreds, bucketHost, key: string)
   ##
   ## Response:
   ##  - result.headers["content-length"]
-  result = client.request(s3SignedUrl(creds, bucketHost, key, httpMethod=HttpHead, setContentType=false), httpMethod=HttpHead)
+  var s3Link: string
+  block:
+    let datetime = getTime().utc.format(basicISO8601)
+    s3Link = s3SignedUrl(
+      creds.AWS_ACCESS_KEY_ID, creds.AWS_SECRET_ACCESS_KEY, creds.AWS_REGION,
+      bucketHost, key,
+      httpMethod = HttpHead,
+      setContentType = false,
+      expireInSec = "65",
+      accessToken = creds.AWS_SESSION_TOKEN,
+      makeDateTime = datetime
+    )
+  result = client.request(s3Link, httpMethod=HttpHead)
 
 
 
@@ -106,7 +131,19 @@ proc s3GetObject*(client: HttpClient, creds: AwsCreds, bucketHost, key, download
   ## AWS S3 API - GetObject
   ##
   ## `downloadPath` needs to full local path.
-  client.downloadFile(s3SignedUrl(creds, bucketHost, key, httpMethod=HttpGet, setContentType=false), downloadPath)
+  var s3Link: string
+  block:
+    let datetime = getTime().utc.format(basicISO8601)
+    s3Link = s3SignedUrl(
+      creds.AWS_ACCESS_KEY_ID, creds.AWS_SECRET_ACCESS_KEY, creds.AWS_REGION,
+      bucketHost, key,
+      httpMethod = HttpGet,
+      setContentType = false,
+      expireInSec = "65",
+      accessToken = creds.AWS_SESSION_TOKEN,
+      makeDateTime = datetime
+    )
+  client.downloadFile(s3Link, downloadPath)
 
 
 
@@ -125,7 +162,19 @@ proc s3PutObject*(client: HttpClient, creds: AwsCreds, bucketHost, key, localPat
   ## AWS S3 API - PutObject
   ##
   ## The PutObject reads the file to memory and uploads it.
-  result = client.put(s3SignedUrl(creds, bucketHost, key, httpMethod=HttpPut), body = readFile(localPath))
+  var s3Link: string
+  block:
+    let datetime = getTime().utc.format(basicISO8601)
+    s3Link = s3SignedUrl(
+      creds.AWS_ACCESS_KEY_ID, creds.AWS_SECRET_ACCESS_KEY, creds.AWS_REGION,
+      bucketHost, key,
+      httpMethod = HttpPut,
+      setContentType = false,
+      expireInSec = "65",
+      accessToken = creds.AWS_SESSION_TOKEN,
+      makeDateTime = datetime
+    )
+  result = client.put(s3Link, body = readFile(localPath))
 
 
 
@@ -172,13 +221,25 @@ proc s3CopyObject*(client: HttpClient, creds: AwsCreds, bucketHost, key, copyObj
   ##       can contain either a success or an error.
   ##       (https://docs.aws.amazon.com/AmazonS3/latest/API/API_CopyObject.html)
 
-  let
-    copyObjectEncoded = copyObject.encodeUrl()
-    headers = newHttpHeaders(@[
+  var s3Link: string
+  block:
+    let datetime = getTime().utc.format(basicISO8601)
+    let copyObjectEncoded = copyObject.encodeUrl()
+    s3Link = s3SignedUrl(
+      creds.AWS_ACCESS_KEY_ID, creds.AWS_SECRET_ACCESS_KEY, creds.AWS_REGION,
+      bucketHost, key,
+      httpMethod = HttpPut,
+      setContentType = false,
+      copyObject = copyObjectEncoded,
+      expireInSec = "65",
+      accessToken = creds.AWS_SESSION_TOKEN,
+      makeDateTime = datetime
+    )
+
+  let copyObjectEncoded = copyObject.encodeUrl()
+  let headers = newHttpHeaders(@[
       ("host", bucketHost),
       ("x-amz-copy-source", copyObjectEncoded),
     ])
-
-  result = client.request(s3SignedUrl(creds, bucketHost, key, httpMethod=HttpPut, copyObject=copyObjectEncoded, setContentType=false), httpMethod=HttpPut, headers=headers)
-
+  result = client.request(s3Link, httpMethod=HttpPut, headers=headers)
 

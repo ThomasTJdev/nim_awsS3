@@ -1,3 +1,26 @@
+# v3.2.0
+
+## Changes
+
+* Started deprecation of s3Presigned. Move to s3SignedUrl.
+* Implemented own `makeDateTime()` instead of AwsSigV4's `makeDateTime()` due
+  valgrind memory leak. (optional, you can still use AwsSigV4's `makeDateTime()`)
+
+**Valgrind work around:**
+```nim
+var datetime: string
+block:
+  let now = getTime()
+  let date = now.utc.format(basicISO8601)
+  datetime = $date
+```
+
+## Breaking changes
+
+* Upgraded lib dep for awsSTS to `>= 2.0.3`
+
+
+
 # v3.0.2
 
 ## Changes

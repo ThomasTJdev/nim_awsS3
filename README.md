@@ -91,27 +91,29 @@ This uses the nimble package `awsSTS` to store the credentials.
 
 ____
 
-## s3Presigned*
+## S3 Signed URL
 
 Generate S3 presigned URL's.
 
-### API
+### API {.deprecated.}
 
-This is the standard public API.
+~~This is the standard public API.~~
+
+Use the `s3SignedUrl` instead.
 
 ```nim
 proc s3Presigned*(accessKey, secretKey, region: string, bucketHost, key: string,
     httpMethod = HttpGet,
     contentDisposition = CDTattachment, contentDispositionName = "",
     setContentType = true, fileExt = "", expireInSec = "65", accessToken = ""
-  ): string =
+  ): string {.deprecated.} =
 ```
 
 ```nim
 proc s3Presigned*(creds: AwsCreds, bucketHost, key: string,
     contentDisposition = CDTattachment, contentDispositionName = "",
     setContentType = true, fileExt = "", expireInSec = "65"
-  ): string =
+  ): string {.deprecated.} =
 ```
 
 ### Raw

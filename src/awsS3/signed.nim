@@ -104,7 +104,8 @@ proc s3SignedUrl*(
 
   if setContentType:
     let extension = if fileExt.len > 0: fileExt[1..^1]
-                    else: splitFile(key).ext[1..^1]
+                    elif splitFile(key).ext.len > 0: splitFile(key).ext[1..^1]
+                    else: ""
     query["response-content-type"] = %* mimetypeDB.getOrDefault(extension, "binary/octet-stream")
 
   if customQuery.len > 0:
